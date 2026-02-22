@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Pen To Text — Notes Organizer</title>
+  <meta name="theme-color" content="#faf7f2" />
+  <title>Pen To Text — Notes</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -12,6 +13,9 @@
      HEADER
      ============================================================ -->
 <header>
+  <!-- Sidebar toggle (mobile) -->
+  <button id="sidebarToggle" title="Toggle categories">☰</button>
+
   <h1>Pen To Text</h1>
 
   <div class="header-controls">
@@ -30,14 +34,37 @@
 
     <button id="voiceBtn" title="Voice to Text">🎤</button>
     <button id="addNoteBtn">+ Add Note</button>
-    <button id="viewArchivedBtn">Archived</button>
-    <button id="viewDeletedBtn">Recently Deleted</button>
+    <button id="viewArchivedBtn">📦 Archive</button>
+    <button id="viewDeletedBtn">🗑 Trash</button>
     <button id="undoBtn" style="display:none;">↩ Undo</button>
     <button id="themeToggle" title="Toggle theme">🌙</button>
     <button id="customizeBtn" title="Customize">⚙️</button>
-    <a href="index.html" title="Back to homepage" style="padding:7px 12px;border:1px solid rgba(0,0,0,0.08);border-radius:10px;color:#6b7280;text-decoration:none;font-size:13px;white-space:nowrap;transition:color 0.15s,border-color 0.15s;">← Home</a>
+    <a href="index.html" title="Homepage">← Home</a>
+
+    <!-- Mobile overflow menu button -->
+    <button id="mobileMenuBtn" title="More options">⋯</button>
   </div>
 </header>
+
+<!-- Mobile drawer (hidden until mobileMenuBtn clicked) -->
+<div id="mobileDrawer">
+  <div class="drawer-row">
+    <button id="drawerAddBtn" class="drawer-add">+ Add Note</button>
+    <button id="drawerVoiceBtn" class="drawer-voice">🎤 Voice</button>
+  </div>
+  <div class="drawer-row">
+    <button id="drawerArchivedBtn">📦 Archive</button>
+    <button id="drawerDeletedBtn">🗑 Trash</button>
+  </div>
+  <div class="drawer-row">
+    <button id="drawerThemeBtn">🌙 Theme</button>
+    <button id="drawerCustomizeBtn">⚙️ Settings</button>
+    <a href="index.html">← Home</a>
+  </div>
+</div>
+
+<!-- Sidebar overlay (mobile tap-to-close) -->
+<div id="sidebarOverlay"></div>
 
 <!-- ============================================================
      MAIN LAYOUT
@@ -45,24 +72,32 @@
 <div class="container">
 
   <!-- Sidebar -->
-  <aside>
-    <input id="categorySearch" type="text" placeholder="Search categories…" />
+  <aside id="sidebar">
+    <div class="sidebar-header">Categories</div>
+
+    <input id="categorySearch" type="text" placeholder="Filter…" />
 
     <div class="add-category">
       <input id="newCategoryInput" type="text" placeholder="New category…" />
-      <input id="categoryColorPicker" type="color" value="#4ea8ff" title="Category color" />
-      <button id="addCategoryBtn" title="Add category">+</button>
+      <input id="categoryColorPicker" type="color" value="#4ea8ff" title="Color" />
+      <button id="addCategoryBtn" title="Add">+</button>
     </div>
 
     <ul id="categoryList"></ul>
 
     <p class="sidebar-hint">
-      Click a category to filter. Use ✏️ to rename or recolor, × to delete.
+      Click a category to filter · ✏️ rename · × delete
     </p>
   </aside>
 
   <!-- Notes area -->
   <main id="mainArea">
+    <!-- View bar (title + note count) -->
+    <div class="view-bar">
+      <h2 class="view-title" id="viewTitle">All Notes</h2>
+      <span class="view-count" id="viewCount">0 notes</span>
+    </div>
+
     <div id="notesContainer" class="notes-grid"></div>
   </main>
 
@@ -73,7 +108,7 @@
      ============================================================ -->
 <div id="noteModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
   <div class="modal-content">
-    <button class="close" id="closeModal" aria-label="Close modal">&times;</button>
+    <button class="close" id="closeModal" aria-label="Close">&times;</button>
     <h2 id="modalTitle">Add Note</h2>
 
     <input id="noteTitle" type="text" placeholder="Title (optional)" />
@@ -81,10 +116,10 @@
     <label>Categories</label>
     <div id="noteCategoryOptions"></div>
 
-    <label>Note Color <small>(overrides category color)</small></label>
+    <label>Note Color <small>— overrides category color</small></label>
     <input id="noteColorPicker" type="color" value="#ffffff" />
 
-    <label>Image <small>(optional)</small></label>
+    <label>Image <small>— optional</small></label>
     <input id="noteImage" type="file" accept="image/*" />
 
     <label>Content</label>
@@ -103,8 +138,8 @@
      ============================================================ -->
 <div id="customizeModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
   <div class="modal-content">
-    <button class="close" id="closeCustomize" aria-label="Close modal">&times;</button>
-    <h2>Customize</h2>
+    <button class="close" id="closeCustomize" aria-label="Close">&times;</button>
+    <h2>Settings</h2>
 
     <label>Default Category Color</label>
     <input id="defaultCategoryColor" type="color" value="#4ea8ff" />
@@ -120,5 +155,129 @@
 </div>
 
 <script src="script.js"></script>
+<script>
+  /* ============================================================
+     Mobile UI wiring — sidebar toggle & mobile drawer
+     ============================================================ */
+
+  const sidebar        = document.getElementById('sidebar');
+  const sidebarOverlay = document.getElementById('sidebarOverlay');
+  const sidebarToggle  = document.getElementById('sidebarToggle');
+  const mobileMenuBtn  = document.getElementById('mobileMenuBtn');
+  const mobileDrawer   = document.getElementById('mobileDrawer');
+
+  function openSidebar() {
+    sidebar.classList.add('open');
+    sidebarOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeSidebar() {
+    sidebar.classList.remove('open');
+    sidebarOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+  });
+
+  sidebarOverlay.addEventListener('click', closeSidebar);
+
+  // Close sidebar when a category is chosen on mobile
+  document.getElementById('categoryList').addEventListener('click', () => {
+    if (window.innerWidth <= 680) closeSidebar();
+  });
+
+  // Mobile drawer
+  let drawerOpen = false;
+  mobileMenuBtn.addEventListener('click', () => {
+    drawerOpen = !drawerOpen;
+    mobileDrawer.classList.toggle('open', drawerOpen);
+  });
+
+  // Close drawer when clicking outside
+  document.addEventListener('click', e => {
+    if (drawerOpen && !mobileDrawer.contains(e.target) && e.target !== mobileMenuBtn) {
+      drawerOpen = false;
+      mobileDrawer.classList.remove('open');
+    }
+  });
+
+  // Wire drawer buttons to the same functions as desktop buttons
+  document.getElementById('drawerAddBtn').addEventListener('click', () => {
+    mobileDrawer.classList.remove('open');
+    drawerOpen = false;
+    document.getElementById('addNoteBtn').click();
+  });
+
+  document.getElementById('drawerVoiceBtn').addEventListener('click', () => {
+    mobileDrawer.classList.remove('open');
+    drawerOpen = false;
+    document.getElementById('voiceBtn').click();
+  });
+
+  document.getElementById('drawerArchivedBtn').addEventListener('click', () => {
+    mobileDrawer.classList.remove('open');
+    drawerOpen = false;
+    document.getElementById('viewArchivedBtn').click();
+  });
+
+  document.getElementById('drawerDeletedBtn').addEventListener('click', () => {
+    mobileDrawer.classList.remove('open');
+    drawerOpen = false;
+    document.getElementById('viewDeletedBtn').click();
+  });
+
+  document.getElementById('drawerThemeBtn').addEventListener('click', () => {
+    mobileDrawer.classList.remove('open');
+    drawerOpen = false;
+    document.getElementById('themeToggle').click();
+  });
+
+  document.getElementById('drawerCustomizeBtn').addEventListener('click', () => {
+    mobileDrawer.classList.remove('open');
+    drawerOpen = false;
+    document.getElementById('customizeBtn').click();
+  });
+
+  /* ============================================================
+     View bar updates — patch renderNotes to update title/count
+     ============================================================ */
+  const _origRenderNotes = window.renderNotes;
+  if (typeof renderNotes !== 'undefined') {
+    const _orig = renderNotes;
+    window.renderNotes = function() {
+      _orig();
+      updateViewBar();
+    };
+  }
+
+  function updateViewBar() {
+    const titleEl = document.getElementById('viewTitle');
+    const countEl = document.getElementById('viewCount');
+    if (!titleEl || !countEl) return;
+
+    const cards = document.querySelectorAll('#notesContainer .note-card');
+    const n = cards.length;
+
+    // Figure out current view name
+    let title = 'All Notes';
+    if (typeof showingArchived !== 'undefined' && showingArchived) title = 'Archive';
+    else if (typeof showingDeleted !== 'undefined' && showingDeleted) title = 'Trash';
+    else if (typeof currentCategory !== 'undefined' && currentCategory && currentCategory !== 'All Notes') title = currentCategory;
+
+    titleEl.textContent = title;
+    countEl.textContent = n === 1 ? '1 note' : `${n} notes`;
+  }
+
+  // Call once after app init
+  setTimeout(updateViewBar, 100);
+
+  // Also update on any category click
+  document.getElementById('categoryList').addEventListener('click', () => setTimeout(updateViewBar, 80));
+  document.getElementById('searchBar').addEventListener('input', () => setTimeout(updateViewBar, 280));
+</script>
+
 </body>
 </html>
