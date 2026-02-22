@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pen To Text — Notes Organizer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ============================================================
+     HEADER
+     ============================================================ -->
+<header>
+  <h1>Pen To Text</h1>
+
+  <div class="header-controls">
+    <input id="searchBar" type="text" placeholder="Search notes…" autocomplete="off" />
+
+    <select id="sortNotes" title="Sort notes">
+      <option value="dateDesc">Date (Newest)</option>
+      <option value="dateAsc">Date (Oldest)</option>
+      <option value="titleAsc">Title (A → Z)</option>
+      <option value="titleDesc">Title (Z → A)</option>
+      <option value="editedDesc">Last Edited (Newest)</option>
+      <option value="editedAsc">Last Edited (Oldest)</option>
+      <option value="wordCountDesc">Word Count (High → Low)</option>
+      <option value="wordCountAsc">Word Count (Low → High)</option>
+    </select>
+
+    <button id="voiceBtn" title="Voice to Text">🎤</button>
+    <button id="addNoteBtn">+ Add Note</button>
+    <button id="viewArchivedBtn">Archived</button>
+    <button id="viewDeletedBtn">Recently Deleted</button>
+    <button id="undoBtn" style="display:none;">↩ Undo</button>
+    <button id="themeToggle" title="Toggle theme">🌙</button>
+    <button id="customizeBtn" title="Customize">⚙️</button>
+    <a href="index.html" title="Back to homepage" style="padding:7px 12px;border:1px solid rgba(0,0,0,0.08);border-radius:10px;color:#6b7280;text-decoration:none;font-size:13px;white-space:nowrap;transition:color 0.15s,border-color 0.15s;">← Home</a>
+  </div>
+</header>
+
+<!-- ============================================================
+     MAIN LAYOUT
+     ============================================================ -->
+<div class="container">
+
+  <!-- Sidebar -->
+  <aside>
+    <input id="categorySearch" type="text" placeholder="Search categories…" />
+
+    <div class="add-category">
+      <input id="newCategoryInput" type="text" placeholder="New category…" />
+      <input id="categoryColorPicker" type="color" value="#4ea8ff" title="Category color" />
+      <button id="addCategoryBtn" title="Add category">+</button>
+    </div>
+
+    <ul id="categoryList"></ul>
+
+    <p class="sidebar-hint">
+      Click a category to filter. Use ✏️ to rename or recolor, × to delete.
+    </p>
+  </aside>
+
+  <!-- Notes area -->
+  <main id="mainArea">
+    <div id="notesContainer" class="notes-grid"></div>
+  </main>
+
+</div>
+
+<!-- ============================================================
+     MODAL — Add / Edit Note
+     ============================================================ -->
+<div id="noteModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-content">
+    <button class="close" id="closeModal" aria-label="Close modal">&times;</button>
+    <h2 id="modalTitle">Add Note</h2>
+
+    <input id="noteTitle" type="text" placeholder="Title (optional)" />
+
+    <label>Categories</label>
+    <div id="noteCategoryOptions"></div>
+
+    <label>Note Color <small>(overrides category color)</small></label>
+    <input id="noteColorPicker" type="color" value="#ffffff" />
+
+    <label>Image <small>(optional)</small></label>
+    <input id="noteImage" type="file" accept="image/*" />
+
+    <label>Content</label>
+    <textarea id="noteContent" placeholder="Write your note…"></textarea>
+
+    <div class="modal-actions">
+      <button id="modalVoiceBtn" title="Voice to Text">🎤</button>
+      <button id="saveNoteBtn" class="btn-primary">Save</button>
+      <button id="cancelBtn" class="btn-ghost">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL — Customize
+     ============================================================ -->
+<div id="customizeModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="modal-content">
+    <button class="close" id="closeCustomize" aria-label="Close modal">&times;</button>
+    <h2>Customize</h2>
+
+    <label>Default Category Color</label>
+    <input id="defaultCategoryColor" type="color" value="#4ea8ff" />
+
+    <label>Default Note Color</label>
+    <input id="defaultNoteColor" type="color" value="#ffffff" />
+
+    <div class="modal-actions">
+      <button id="applyCustomizationBtn" class="btn-primary">Apply</button>
+      <button id="resetDataBtn" class="btn-danger">Reset All Data</button>
+    </div>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
