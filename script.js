@@ -176,17 +176,65 @@ function ensureAllNotesCategory() {
   }
 }
 
+/** Converts a hex color to a dark-mode-friendly version by darkening it */
+function darkAdaptColor(hex) {
+  if (!hex || !hex.startsWith("#")) return "var(--panel2)";
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0,2), 16);
+  const g = parseInt(h.slice(2,4), 16);
+  const b = parseInt(h.slice(4,6), 16);
+  const lum = (r * 0.299 + g * 0.587 + b * 0.114);
+  // If near-white or very light, use panel2
+  if (lum > 220) return "var(--panel2)";
+  // If light (pastel range), darken significantly and desaturate slightly
+  if (lum > 140) {
+    const dr = Math.round(r * 0.28);
+    const dg = Math.round(g * 0.28);
+    const db = Math.round(b * 0.28);
+    return `rgb(${dr},${dg},${db})`;
+  }
+  // Mid-range: moderate darkening
+  if (lum > 80) {
+    const dr = Math.round(r * 0.45);
+    const dg = Math.round(g * 0.45);
+    const db = Math.round(b * 0.45);
+    return `rgb(${dr},${dg},${db})`;
+  }
+  // Already dark — use as-is or slightly lighten for visibility
+  return hex;
+}
+
 /** Returns a CSS background value for a note card. */
 function noteBackground(note) {
-  if (note.color) return note.color;
+  const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+
+  const adapt = (color) => isDark ? darkAdaptColor(color) : color;
+
+  if (note.color && note.color !== "#ffffff") {
+    return adapt(note.color);
+  }
   if (Array.isArray(note.category) && note.category.length) {
     const colors = note.category
       .map(n => findCategory(n)?.color || defaultCategoryColor)
       .filter(Boolean);
-    if (colors.length === 1) return colors[0];
-    if (colors.length > 1)  return `linear-gradient(135deg, ${colors.join(", ")})`;
+    if (colors.length === 1) return adapt(colors[0]);
+    if (colors.length > 1) {
+      if (isDark) return adapt(colors[0]); // gradient looks bad darkened, use first
+      return `linear-gradient(135deg, ${colors.join(", ")})`;
+    }
   }
-  return defaultNoteColor;
+  if (isDark) return "var(--panel2)";
+  return note.color || defaultNoteColor;
+}
+
+/** Returns true if a hex color is white or very light */
+function isNearWhite(hex) {
+  if (!hex || !hex.startsWith("#")) return false;
+  const h = hex.replace("#", "");
+  const r = parseInt(h.slice(0,2), 16);
+  const g = parseInt(h.slice(2,4), 16);
+  const b = parseInt(h.slice(4,6), 16);
+  return (r * 0.299 + g * 0.587 + b * 0.114) > 216;
 }
 
 /** Sort a copy of an array of notes by currentSort. */
@@ -207,6 +255,13 @@ function sortNotes(arr) {
       return copy.sort((a, b) => wordCount(b.content) - wordCount(a.content));
     case "wordCountAsc":
       return copy.sort((a, b) => wordCount(a.content) - wordCount(b.content));
+    case "color":
+      // Group by background color — notes with same color cluster together
+      return copy.sort((a, b) => {
+        const ca = noteBackground(a).split(",")[0].trim();
+        const cb = noteBackground(b).split(",")[0].trim();
+        return ca.localeCompare(cb);
+      });
     default: // dateDesc
       return copy.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   }
@@ -248,17 +303,61 @@ function renderCategories(filter = "") {
       const controls = document.createElement("div");
       controls.className = "cat-controls";
 
-      const editBtn = document.createElement("button");
-      editBtn.className = "cat-edit-btn";
-      editBtn.title = "Rename / recolor";
-      editBtn.textContent = "✏️";
+      if (cat.name !== "All Notes") {
+        const editBtn = document.createElement("button");
+        editBtn.className = "cat-edit-btn";
+        editBtn.title = "Rename / recolor";
+        editBtn.textContent = "✏️";
 
-      const delBtn = document.createElement("button");
-      delBtn.className = "cat-del-btn";
-      delBtn.title = "Delete category";
-      delBtn.textContent = "×";
+        const delBtn = document.createElement("button");
+        delBtn.className = "cat-del-btn";
+        delBtn.title = "Delete category";
+        delBtn.textContent = "×";
 
-      controls.append(editBtn, delBtn);
+        controls.append(editBtn, delBtn);
+
+        // Edit category
+        editBtn.addEventListener("click", e => {
+          e.stopPropagation();
+          const newName = prompt("Rename category:", cat.name)?.trim();
+          if (!newName) return;
+          if (categories.some(c => c.name === newName && c !== cat)) {
+            alert("A category with that name already exists.");
+            return;
+          }
+          const newColor = prompt("Category color (hex, e.g. #4ea8ff):", cat.color || defaultCategoryColor)?.trim() || cat.color;
+          [notes, archivedNotes, recentlyDeleted].forEach(arr =>
+            arr.forEach(n => {
+              if (Array.isArray(n.category))
+                n.category = n.category.map(c => c === cat.name ? newName : c);
+            })
+          );
+          if (currentCategory === cat.name) currentCategory = newName;
+          cat.name  = newName;
+          cat.color = newColor;
+          saveData();
+          renderCategories(categorySearch.value);
+          renderNotes();
+        });
+
+        // Delete category
+        delBtn.addEventListener("click", e => {
+          e.stopPropagation();
+          if (!confirm(`Delete category "${cat.name}"? Notes will lose this tag.`)) return;
+          categories = categories.filter(c => c.name !== cat.name);
+          [notes, archivedNotes, recentlyDeleted].forEach(arr =>
+            arr.forEach(n => {
+              if (Array.isArray(n.category))
+                n.category = n.category.filter(c => c !== cat.name);
+            })
+          );
+          if (currentCategory === cat.name) currentCategory = "All Notes";
+          saveData();
+          renderCategories(categorySearch.value);
+          renderNotes();
+        });
+      }
+
       li.append(dot, label, controls);
       categoryList.appendChild(li);
 
@@ -266,56 +365,10 @@ function renderCategories(filter = "") {
 
       // Select category
       li.addEventListener("click", e => {
-        if (e.target === editBtn || e.target === delBtn) return;
+        if (e.target.closest(".cat-controls")) return;
         currentCategory = cat.name;
         showingArchived = false;
         showingDeleted  = false;
-        renderCategories(categorySearch.value);
-        renderNotes();
-      });
-
-      // Edit category
-      editBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        const newName = prompt("Rename category:", cat.name)?.trim();
-        if (!newName) return;
-        if (categories.some(c => c.name === newName && c !== cat)) {
-          alert("A category with that name already exists.");
-          return;
-        }
-        const newColor = prompt("Category color (hex, e.g. #4ea8ff):", cat.color || defaultCategoryColor)?.trim() || cat.color;
-
-        // Update notes in all lists
-        [notes, archivedNotes, recentlyDeleted].forEach(arr =>
-          arr.forEach(n => {
-            if (Array.isArray(n.category))
-              n.category = n.category.map(c => c === cat.name ? newName : c);
-          })
-        );
-
-        if (currentCategory === cat.name) currentCategory = newName;
-        cat.name  = newName;
-        cat.color = newColor;
-        saveData();
-        renderCategories(categorySearch.value);
-        renderNotes();
-      });
-
-      // Delete category
-      delBtn.addEventListener("click", e => {
-        e.stopPropagation();
-        if (cat.name === "All Notes") { alert("Cannot delete 'All Notes'."); return; }
-        if (!confirm(`Delete category "${cat.name}"? Notes will lose this tag.`)) return;
-
-        categories = categories.filter(c => c.name !== cat.name);
-        [notes, archivedNotes, recentlyDeleted].forEach(arr =>
-          arr.forEach(n => {
-            if (Array.isArray(n.category))
-              n.category = n.category.filter(c => c !== cat.name);
-          })
-        );
-        if (currentCategory === cat.name) currentCategory = "All Notes";
-        saveData();
         renderCategories(categorySearch.value);
         renderNotes();
       });
@@ -346,6 +399,9 @@ function renderModalCategories(selected = []) {
 function createCard(note, context) {
   const card = document.createElement("div");
   card.className = "note-card";
+  // Add context class so CSS can always show controls for archive/deleted
+  if (context === "archived") card.classList.add("ctx-archived");
+  if (context === "deleted")  card.classList.add("ctx-deleted");
   card.style.background = noteBackground(note);
 
   /* Pin button */
@@ -425,7 +481,14 @@ function createCard(note, context) {
   }
 
   card.appendChild(controls);
-  card.addEventListener("click", () => openEditModal(note.id));
+
+  // Only open edit modal when clicking the card body, not action buttons
+  card.addEventListener("click", e => {
+    if (e.target.closest(".card-controls") || e.target.closest(".pin-btn")) return;
+    // In archive/deleted views, don't open edit modal on card click
+    if (context === "archived" || context === "deleted") return;
+    openEditModal(note.id);
+  });
   return card;
 }
 
@@ -433,7 +496,11 @@ function makeBtn(label, cls, fn) {
   const btn = document.createElement("button");
   btn.className = cls;
   btn.textContent = label;
-  btn.addEventListener("click", e => { e.stopPropagation(); fn(); });
+  btn.addEventListener("click", e => {
+    e.stopPropagation();
+    e.preventDefault();
+    fn();
+  });
   return btn;
 }
 
@@ -830,6 +897,7 @@ function toggleTheme() {
   if (isDark) document.documentElement.removeAttribute("data-theme");
   else        document.documentElement.setAttribute("data-theme", "dark");
   saveData();
+  renderNotes(); // re-render so noteBackground() picks up new theme
 }
 
 /* -------------------------------------------------------------

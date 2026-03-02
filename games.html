@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Pen To Text — Play Zone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ===================== ROOT ===================== */
+:root{
+  --bg:#0f0e0c; --bg2:#1a1815; --panel:#211f1b; --panel2:#2a2722;
+  --ink:#f0ebe0; --ink2:#c8bfaf; --muted:#8a7f70;
+  --gold:#c9974a; --gold2:#e8c07a; --rust:#b85c38;
+  --sage:#4a8a5a; --sky:#4a7abf; --violet:#7a5abf;
+  --border:rgba(240,235,224,0.08); --border2:rgba(240,235,224,0.15);
+  --r:12px; --rx:20px; --rf:9999px;
+  --font-d:'Playfair Display',serif; --font-b:'DM Sans',sans-serif; --font-m:'DM Mono',monospace;
+  --ease:cubic-bezier(.4,0,.2,1); --spring:cubic-bezier(.34,1.56,.64,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font-b);background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+
+/* grain */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.03;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+/* ===================== NAV ===================== */
+nav{position:sticky;top:0;z-index:90;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;
+  background:rgba(15,14,12,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);}
+.nav-brand{font-family:var(--font-d);font-size:20px;font-weight:900;color:var(--ink);text-decoration:none;letter-spacing:-.02em;}
+.nav-brand span{color:var(--gold);}
+.nav-links{display:flex;gap:10px;flex-wrap:wrap;}
+.nav-links a{padding:7px 14px;border-radius:var(--rf);font-size:13px;color:var(--muted);text-decoration:none;border:1px solid transparent;transition:all .2s;}
+.nav-links a:hover,.nav-links a.active{color:var(--ink);border-color:var(--border2);background:var(--panel);}
+.nav-back{padding:7px 16px;background:var(--panel2);color:var(--ink2);border:1px solid var(--border2);border-radius:var(--rf);font-size:13px;text-decoration:none;transition:all .2s;}
+.nav-back:hover{background:var(--gold);color:#000;}
+
+/* ===================== HERO ===================== */
+.hero{padding:60px 28px 40px;text-align:center;position:relative;overflow:hidden;}
+.hero::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(201,151,74,.12),transparent 70%);pointer-events:none;}
+.hero-eyebrow{display:inline-block;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);
+  padding:5px 14px;border:1px solid rgba(201,151,74,.3);border-radius:var(--rf);margin-bottom:18px;}
+.hero h1{font-family:var(--font-d);font-size:clamp(40px,7vw,72px);font-weight:900;letter-spacing:-.03em;margin-bottom:14px;}
+.hero h1 em{font-style:italic;color:var(--gold);}
+.hero p{font-size:16px;color:var(--muted);max-width:480px;margin:0 auto;line-height:1.7;}
+
+/* ===================== TABS ===================== */
+.tabs-wrap{display:flex;justify-content:center;padding:32px 20px 0;gap:8px;flex-wrap:wrap;}
+.tab-btn{padding:9px 20px;border-radius:var(--rf);border:1px solid var(--border2);background:var(--panel);
+  color:var(--muted);font-family:var(--font-b);font-size:13.5px;font-weight:500;cursor:pointer;
+  transition:all .2s var(--ease);white-space:nowrap;}
+.tab-btn:hover{color:var(--ink);border-color:var(--gold);}
+.tab-btn.active{background:var(--gold);color:#000;border-color:var(--gold);font-weight:600;}
+
+/* ===================== SECTIONS ===================== */
+.game-section{display:none;padding:32px 20px 60px;max-width:900px;margin:0 auto;animation:fadeUp .35s var(--ease);}
+.game-section.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+.section-title{font-family:var(--font-d);font-size:28px;font-weight:700;margin-bottom:6px;letter-spacing:-.02em;}
+.section-sub{font-size:14px;color:var(--muted);margin-bottom:28px;}
+
+/* ===================== BUTTONS ===================== */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 22px;border-radius:var(--rf);border:none;
+  font-family:var(--font-b);font-size:14px;font-weight:500;cursor:pointer;transition:all .2s var(--spring);}
+.btn:hover{transform:translateY(-2px);}
+.btn-gold{background:var(--gold);color:#000;}
+.btn-gold:hover{background:var(--gold2);}
+.btn-dark{background:var(--panel2);color:var(--ink);border:1px solid var(--border2);}
+.btn-dark:hover{background:var(--panel);border-color:var(--gold);}
+.btn-danger{background:var(--rust);color:#fff;}
+.btn-sm{padding:6px 14px;font-size:13px;}
+
+/* ===================== CARD ===================== */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:var(--rx);padding:24px;
+  box-shadow:0 4px 24px rgba(0,0,0,.3);}
+
+/* ============================================================
+   SECTION 1 — TIME KEEPER (Clock / Stopwatch / Timer)
+   ============================================================ */
+.clock-tabs{display:flex;gap:8px;margin-bottom:28px;}
+.clock-tab{padding:8px 20px;border-radius:var(--rf);border:1px solid var(--border2);background:var(--panel2);
+  color:var(--muted);font-size:13.5px;cursor:pointer;transition:all .2s;}
+.clock-tab.active{background:var(--sky);color:#fff;border-color:var(--sky);}
+
+.clock-display{font-family:var(--font-m);font-size:clamp(52px,12vw,96px);font-weight:500;
+  text-align:center;letter-spacing:.04em;color:var(--ink);padding:32px 0;
+  background:var(--panel2);border-radius:var(--rx);border:1px solid var(--border);margin-bottom:20px;}
+.clock-display span{color:var(--gold);}
+
+.clock-controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+
+/* timer input */
+.timer-inputs{display:flex;gap:12px;justify-content:center;margin-bottom:20px;align-items:center;}
+.timer-inputs input{width:72px;height:52px;background:var(--panel2);border:1px solid var(--border2);border-radius:var(--r);
+  color:var(--ink);font-family:var(--font-m);font-size:26px;text-align:center;outline:none;}
+.timer-inputs input:focus{border-color:var(--gold);}
+.timer-sep{font-family:var(--font-m);font-size:28px;color:var(--muted);}
+.timer-label{font-size:11px;text-align:center;color:var(--muted);margin-top:4px;}
+
+/* live clock */
+#liveClock{font-family:var(--font-m);font-size:clamp(48px,11vw,88px);font-weight:400;text-align:center;
+  padding:32px 0;background:var(--panel2);border-radius:var(--rx);border:1px solid var(--border);margin-bottom:16px;}
+#liveDate{text-align:center;font-size:16px;color:var(--muted);margin-bottom:20px;}
+
+/* ============================================================
+   SECTION 2 — NUMBER STORM (Sudoku)
+   ============================================================ */
+.sudoku-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.sudoku-timer{font-family:var(--font-m);font-size:28px;color:var(--gold);background:var(--panel2);
+  padding:8px 18px;border-radius:var(--r);border:1px solid var(--border);}
+.sudoku-diff{display:flex;gap:8px;}
+.diff-btn{padding:6px 14px;border-radius:var(--rf);border:1px solid var(--border2);background:var(--panel2);
+  color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s;}
+.diff-btn.active{background:var(--gold);color:#000;border-color:var(--gold);}
+
+#sudokuGrid{display:grid;grid-template-columns:repeat(9,1fr);gap:2px;background:var(--gold);padding:3px;
+  border-radius:var(--r);max-width:460px;margin:0 auto 20px;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+.sudoku-cell{aspect-ratio:1;background:var(--panel2);display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-m);font-size:clamp(14px,3vw,20px);font-weight:500;cursor:pointer;
+  border-radius:3px;transition:background .15s,color .15s;position:relative;}
+.sudoku-cell:hover{background:var(--panel);}
+.sudoku-cell.given{color:var(--gold2);cursor:default;}
+.sudoku-cell.selected{background:rgba(201,151,74,.25)!important;color:var(--gold);}
+.sudoku-cell.same-num{background:rgba(201,151,74,.10);}
+.sudoku-cell.error{color:var(--rust)!important;background:rgba(184,92,56,.15)!important;}
+.sudoku-cell.box-right{border-right:2px solid var(--gold);}
+.sudoku-cell.box-bottom{border-bottom:2px solid var(--gold);}
+
+.sudoku-numpad{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;}
+.num-btn{width:44px;height:44px;border-radius:var(--r);border:1px solid var(--border2);background:var(--panel2);
+  color:var(--ink);font-family:var(--font-m);font-size:18px;cursor:pointer;transition:all .2s;}
+.num-btn:hover{background:var(--gold);color:#000;}
+.num-btn.erase{font-size:14px;width:56px;}
+
+.sudoku-controls{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+#sudokuMsg{text-align:center;font-size:15px;color:var(--sage);font-weight:600;min-height:24px;margin-top:10px;}
+
+/* ============================================================
+   SECTION 3 — INK FLOOD (Color Fill)
+   ============================================================ */
+#floodCanvas{display:block;margin:0 auto 16px;border-radius:var(--r);border:1px solid var(--border);cursor:pointer;}
+.flood-colors{display:flex;gap:8px;justify-content:center;margin-bottom:16px;flex-wrap:wrap;}
+.flood-color-btn{width:40px;height:40px;border-radius:50%;border:3px solid transparent;cursor:pointer;transition:transform .15s,border-color .15s;}
+.flood-color-btn:hover{transform:scale(1.15);}
+.flood-color-btn.selected{border-color:#fff;transform:scale(1.15);}
+.flood-info{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.flood-moves{font-family:var(--font-m);font-size:18px;color:var(--gold);}
+.flood-info span{font-size:14px;color:var(--muted);}
+
+/* ============================================================
+   SECTION 4 — WORD WEAVER (Wordle-style)
+   ============================================================ */
+#wordGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:320px;margin:0 auto 20px;}
+.word-cell{aspect-ratio:1;background:var(--panel2);border:2px solid var(--border2);border-radius:var(--r);
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:24px;font-weight:500;
+  color:var(--ink);transition:all .3s;text-transform:uppercase;}
+.word-cell.correct{background:#2d6a3f;border-color:#2d6a3f;color:#fff;}
+.word-cell.present{background:#7a5a1a;border-color:#7a5a1a;color:#fff;}
+.word-cell.absent{background:var(--panel);border-color:var(--panel);color:var(--muted);}
+.word-cell.active{border-color:var(--gold);}
+.word-keyboard{display:flex;flex-direction:column;gap:6px;align-items:center;margin-bottom:16px;}
+.word-kb-row{display:flex;gap:5px;}
+.kb-key{min-width:36px;height:40px;padding:0 6px;border-radius:var(--r-sm,6px);border:none;
+  background:var(--panel2);color:var(--ink);font-family:var(--font-m);font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;}
+.kb-key:hover{background:var(--panel);color:var(--gold);}
+.kb-key.correct{background:#2d6a3f;color:#fff;}
+.kb-key.present{background:#7a5a1a;color:#fff;}
+.kb-key.absent{background:var(--bg2,#1a1815);color:var(--muted);}
+.kb-wide{min-width:52px;font-size:12px;}
+#wordMsg{text-align:center;font-size:15px;min-height:22px;margin-bottom:12px;}
+
+/* ============================================================
+   SECTION 6 — MEMORY MATRIX
+   ============================================================ */
+.memory-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px;}
+.memory-stat{background:var(--panel2);border:1px solid var(--border);border-radius:var(--r);padding:10px 18px;text-align:center;}
+.memory-stat .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);}
+.memory-stat .val{font-family:var(--font-m);font-size:22px;color:var(--gold);}
+#memoryGrid{display:grid;gap:8px;max-width:400px;margin:0 auto 20px;}
+.mem-cell{aspect-ratio:1;border-radius:var(--r);background:var(--panel2);border:2px solid var(--border);
+  cursor:pointer;transition:all .3s var(--spring);display:flex;align-items:center;justify-content:center;font-size:24px;}
+.mem-cell:hover{border-color:var(--gold);transform:scale(1.04);}
+.mem-cell.highlight{background:var(--gold);border-color:var(--gold2);transform:scale(1.06);}
+.mem-cell.correct{background:var(--sage);border-color:var(--sage);}
+.mem-cell.wrong{background:var(--rust);border-color:var(--rust);}
+.mem-cell.revealed{background:var(--panel);border-color:var(--border2);}
+#memoryMsg{text-align:center;font-size:15px;min-height:22px;color:var(--gold);}
+
+/* ============================================================
+   SECTION 7 — CHAIN REACTION (2048)
+   ============================================================ */
+#chainGrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-width:400px;margin:0 auto 20px;
+  background:var(--panel2);padding:10px;border-radius:var(--rx);border:1px solid var(--border);}
+.chain-cell{aspect-ratio:1;border-radius:var(--r);display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-m);font-size:clamp(16px,3vw,26px);font-weight:500;transition:all .15s;border:2px solid transparent;}
+.chain-score-row{display:flex;gap:12px;justify-content:center;margin-bottom:18px;flex-wrap:wrap;}
+.chain-score{background:var(--panel2);border:1px solid var(--border);border-radius:var(--r);
+  padding:10px 20px;text-align:center;min-width:100px;}
+.chain-score .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);}
+.chain-score .val{font-family:var(--font-m);font-size:24px;color:var(--gold);}
+#chainMsg{text-align:center;font-size:15px;min-height:22px;color:var(--gold);}
+
+/* chain cell colors */
+.c2{background:#1a1a2e;color:#a0a0ff;border-color:#2a2a4e;}
+.c4{background:#16213e;color:#7090ff;border-color:#253052;}
+.c8{background:#0f3460;color:#40b0ff;border-color:#1a4a80;}
+.c16{background:#533483;color:#c080ff;border-color:#6a44a0;}
+.c32{background:#7a1f3d;color:#ff8080;border-color:#9a2f5a;}
+.c64{background:#b85c38;color:#ffe0c0;border-color:#d06040;}
+.c128{background:#8a7a00;color:#ffe070;border-color:#a09000;}
+.c256{background:#2d6a3f;color:#80ffa0;border-color:#3a8050;}
+.c512{background:#1a6a5a;color:#60ffe0;border-color:#2a8a70;}
+.c1024{background:#c9974a;color:#fff;border-color:#e8b060;}
+.c2048{background:#e8c07a;color:#000;border-color:#f0d090;}
+
+/* ============================================================
+   SECTION 8 — TRIVIA VAULT
+   ============================================================ */
+.trivia-subjects{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.subject-btn{padding:7px 16px;border-radius:var(--rf);border:1px solid var(--border2);background:var(--panel2);
+  color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s;}
+.subject-btn:hover{color:var(--ink);border-color:var(--gold);}
+.subject-btn.active{background:var(--gold);color:#000;border-color:var(--gold);}
+
+.trivia-card{background:var(--panel2);border:1px solid var(--border2);border-radius:var(--rx);padding:28px;margin-bottom:20px;min-height:160px;}
+.trivia-subject-tag{display:inline-block;padding:3px 10px;border-radius:var(--rf);font-size:11px;font-weight:600;
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:14px;}
+.trivia-q{font-family:var(--font-d);font-size:20px;font-weight:700;line-height:1.4;margin-bottom:20px;}
+.trivia-options{display:flex;flex-direction:column;gap:10px;}
+.trivia-opt{padding:12px 16px;border-radius:var(--r);border:1.5px solid var(--border2);background:var(--panel);
+  color:var(--ink2);font-size:14px;cursor:pointer;text-align:left;transition:all .2s;display:flex;gap:10px;align-items:start;}
+.trivia-opt:hover{border-color:var(--gold);color:var(--ink);}
+.trivia-opt.correct{background:rgba(74,138,90,.2);border-color:var(--sage);color:#80ffa0;}
+.trivia-opt.wrong{background:rgba(184,92,56,.2);border-color:var(--rust);color:#ffa080;}
+.trivia-opt span.opt-letter{font-family:var(--font-m);font-weight:600;color:var(--gold);flex-shrink:0;}
+
+.trivia-result{display:flex;align-items:center;gap:14px;padding:16px 20px;border-radius:var(--r);
+  background:var(--panel);border:1px solid var(--border);margin-bottom:16px;display:none;}
+.trivia-result.show{display:flex;}
+.trivia-explain{flex:1;font-size:14px;color:var(--ink2);line-height:1.6;}
+.trivia-save-btn{padding:8px 16px;border-radius:var(--rf);border:1px solid var(--gold);background:transparent;
+  color:var(--gold);font-size:13px;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.trivia-save-btn:hover{background:var(--gold);color:#000;}
+
+.trivia-score-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px;}
+.trivia-score{font-family:var(--font-m);font-size:22px;color:var(--gold);}
+
+/* ============================================================
+   SECTION 9 — MIND BENDER (Brain Puzzles)
+   ============================================================ */
+.puzzle-tabs{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
+.puzzle-tab{padding:7px 16px;border-radius:var(--rf);border:1px solid var(--border2);background:var(--panel2);
+  color:var(--muted);font-size:13px;cursor:pointer;transition:all .2s;}
+.puzzle-tab.active{background:var(--violet);color:#fff;border-color:var(--violet);}
+
+/* Lights Out */
+#lightsGrid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;max-width:300px;margin:0 auto 16px;}
+.light-cell{aspect-ratio:1;border-radius:var(--r);cursor:pointer;transition:all .2s var(--spring);}
+.light-on{background:var(--gold);box-shadow:0 0 12px rgba(201,151,74,.5);}
+.light-off{background:var(--panel2);border:1px solid var(--border);}
+.light-cell:hover{transform:scale(1.06);}
+
+/* Math Flash */
+.math-q{font-family:var(--font-m);font-size:clamp(36px,8vw,64px);text-align:center;padding:32px;
+  background:var(--panel2);border-radius:var(--rx);border:1px solid var(--border);margin-bottom:20px;color:var(--gold);}
+.math-input{width:100%;max-width:220px;display:block;margin:0 auto 16px;height:52px;
+  background:var(--panel2);border:2px solid var(--border2);border-radius:var(--r);
+  color:var(--ink);font-family:var(--font-m);font-size:24px;text-align:center;outline:none;}
+.math-input:focus{border-color:var(--gold);}
+.math-streak{font-family:var(--font-m);font-size:16px;color:var(--muted);}
+.math-streak span{color:var(--gold);}
+
+/* Pattern Guess */
+.pattern-seq{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:24px;}
+.pattern-num{width:52px;height:52px;border-radius:var(--r);background:var(--panel2);
+  border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-m);font-size:20px;color:var(--ink);}
+.pattern-num.question{background:var(--violet);border-color:var(--violet);color:#fff;font-size:18px;}
+.pattern-opts{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:16px;}
+.pattern-opt{width:60px;height:60px;border-radius:var(--r);background:var(--panel2);border:2px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;font-family:var(--font-m);font-size:18px;cursor:pointer;transition:all .2s;}
+.pattern-opt:hover{border-color:var(--gold);color:var(--gold);}
+.pattern-opt.correct{background:var(--sage);border-color:var(--sage);color:#fff;}
+.pattern-opt.wrong{background:var(--rust);border-color:var(--rust);color:#fff;}
+#patternMsg,.#lightsMsg,#mathMsg{text-align:center;font-size:15px;min-height:22px;color:var(--gold);}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);
+  background:var(--sage);color:#fff;padding:12px 24px;border-radius:var(--rf);
+  font-size:14px;font-weight:500;z-index:999;transition:transform .3s var(--spring),opacity .3s;opacity:0;pointer-events:none;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media(max-width:680px){
+  nav{padding:12px 16px;}
+  .nav-links{gap:6px;}
+  .nav-links a{padding:6px 10px;font-size:12px;}
+  .hero{padding:40px 16px 28px;}
+  .game-section{padding:20px 14px 40px;}
+  .tabs-wrap{padding:20px 14px 0;gap:6px;}
+  .tab-btn{padding:7px 14px;font-size:13px;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-brand">Pen <span>&</span> Text</a>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <div class="nav-links">
+      <a href="#" class="active" id="navPlay">Play Zone</a>
+      <a href="note.html">My Notes</a>
+    </div>
+    <a href="index.html" class="nav-back">← Home</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Games & Tools</div>
+  <h1>The <em>Play Zone</em></h1>
+  <p>Sharpen your mind, pass the time, or just unwind. All games save your progress locally.</p>
+</div>
+
+<!-- TABS -->
+<div class="tabs-wrap">
+  <button class="tab-btn active" data-tab="timekeeper">⏱ TimeKeeper</button>
+  <button class="tab-btn" data-tab="numstorm">🔢 Number Storm</button>
+  <button class="tab-btn" data-tab="inkflood">🎨 Ink Flood</button>
+  <button class="tab-btn" data-tab="wordweaver">📝 Word Weaver</button>
+  <button class="tab-btn" data-tab="memory">🧠 Memory Matrix</button>
+  <button class="tab-btn" data-tab="chain">⛓ Chain Reaction</button>
+  <button class="tab-btn" data-tab="trivia">💡 Trivia Vault</button>
+  <button class="tab-btn" data-tab="mindbender">🧩 Mind Bender</button>
+</div>
+
+<!-- ================================================================
+     SECTION: TIMEKEEPER
+     ================================================================ -->
+<section class="game-section active" id="tab-timekeeper">
+  <h2 class="section-title">TimeKeeper</h2>
+  <p class="section-sub">World clock, stopwatch, and countdown timer — all in one.</p>
+  <div class="clock-tabs">
+    <button class="clock-tab active" data-clock="clock">🕐 Clock</button>
+    <button class="clock-tab" data-clock="stopwatch">⏱ Stopwatch</button>
+    <button class="clock-tab" data-clock="timer">⏲ Timer</button>
+  </div>
+
+  <!-- CLOCK -->
+  <div id="clockPane">
+    <div id="liveClock">00:00:00</div>
+    <div id="liveDate"></div>
+    <div style="text-align:center;">
+      <select id="tzSelect" style="background:var(--panel2);color:var(--ink);border:1px solid var(--border2);border-radius:var(--rf);padding:8px 14px;font-size:13px;outline:none;cursor:pointer;">
+        <option value="local">Local Time</option>
+        <option value="UTC">UTC</option>
+        <option value="America/New_York">New York (EST)</option>
+        <option value="America/Los_Angeles">Los Angeles (PST)</option>
+        <option value="Europe/London">London (GMT)</option>
+        <option value="Europe/Paris">Paris (CET)</option>
+        <option value="Asia/Tokyo">Tokyo (JST)</option>
+        <option value="Asia/Manila">Manila (PHT)</option>
+        <option value="Asia/Dubai">Dubai (GST)</option>
+        <option value="Australia/Sydney">Sydney (AEDT)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- STOPWATCH -->
+  <div id="stopwatchPane" style="display:none;">
+    <div class="clock-display" id="swDisplay">00:00<span>.00</span></div>
+    <div class="clock-controls">
+      <button class="btn btn-gold" id="swStart">▶ Start</button>
+      <button class="btn btn-dark" id="swLap">⚑ Lap</button>
+      <button class="btn btn-dark" id="swReset">↺ Reset</button>
+    </div>
+    <div id="lapList" style="margin-top:16px;display:flex;flex-direction:column;gap:6px;max-height:200px;overflow-y:auto;"></div>
+  </div>
+
+  <!-- TIMER -->
+  <div id="timerPane" style="display:none;">
+    <div class="timer-inputs" id="timerInputs">
+      <div><input type="number" id="timerH" placeholder="00" min="0" max="99" value="0"/><div class="timer-label">HH</div></div>
+      <span class="timer-sep">:</span>
+      <div><input type="number" id="timerM" placeholder="00" min="0" max="59" value="5"/><div class="timer-label">MM</div></div>
+      <span class="timer-sep">:</span>
+      <div><input type="number" id="timerS" placeholder="00" min="0" max="59" value="0"/><div class="timer-label">SS</div></div>
+    </div>
+    <div class="clock-display" id="timerDisplay" style="display:none;">00:05<span>:00</span></div>
+    <div class="clock-controls">
+      <button class="btn btn-gold" id="timerStart">▶ Start</button>
+      <button class="btn btn-dark" id="timerReset">↺ Reset</button>
+    </div>
+    <div id="timerMsg" style="text-align:center;margin-top:14px;font-size:15px;color:var(--gold);min-height:22px;"></div>
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION: NUMBER STORM (Sudoku)
+     ================================================================ -->
+<section class="game-section" id="tab-numstorm">
+  <h2 class="section-title">Number Storm</h2>
+  <p class="section-sub">A freshly generated Sudoku every round. Fill the grid — no repeats in any row, column, or 3×3 box.</p>
+  <div class="sudoku-header">
+    <div class="sudoku-timer" id="sudokuTimer">00:00</div>
+    <div class="sudoku-diff">
+      <button class="diff-btn active" data-diff="easy">Easy</button>
+      <button class="diff-btn" data-diff="medium">Medium</button>
+      <button class="diff-btn" data-diff="hard">Hard</button>
+    </div>
+    <button class="btn btn-gold btn-sm" id="newSudokuBtn">New Game</button>
+  </div>
+  <div id="sudokuGrid"></div>
+  <div class="sudoku-numpad" id="sudokuNumpad"></div>
+  <div class="sudoku-controls">
+    <button class="btn btn-dark btn-sm" id="sudokuHint">💡 Hint</button>
+    <button class="btn btn-dark btn-sm" id="sudokuSolve">✓ Solve</button>
+    <button class="btn btn-dark btn-sm" id="sudokuNew2">↺ New</button>
+  </div>
+  <div id="sudokuMsg"></div>
+</section>
+
+<!-- ================================================================
+     SECTION: INK FLOOD
+     ================================================================ -->
+<section class="game-section" id="tab-inkflood">
+  <h2 class="section-title">Ink Flood</h2>
+  <p class="section-sub">Fill the entire board with one color in as few moves as possible. Start from the top-left and flood outward.</p>
+  <div class="flood-info">
+    <span>Moves: <span class="flood-moves" id="floodMoves">0</span></span>
+    <span id="floodMaxMsg">Max: 25 moves</span>
+    <span>Size: <select id="floodSize" style="background:var(--panel2);color:var(--ink);border:1px solid var(--border2);border-radius:var(--rf);padding:4px 10px;font-size:13px;outline:none;cursor:pointer;">
+      <option value="12">12×12</option><option value="16" selected>16×16</option><option value="20">20×20</option>
+    </select></span>
+  </div>
+  <canvas id="floodCanvas" width="400" height="400"></canvas>
+  <div class="flood-colors" id="floodColors"></div>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+    <button class="btn btn-gold btn-sm" id="newFloodBtn">New Game</button>
+    <div id="floodMsg" style="display:flex;align-items:center;font-size:15px;color:var(--sage);font-weight:600;"></div>
+  </div>
+</section>
+
+
+<!-- ================================================================
+     SECTION: WORD WEAVER
+     ================================================================ -->
+<section class="game-section" id="tab-wordweaver">
+  <h2 class="section-title">Word Weaver</h2>
+  <p class="section-sub">Guess the hidden 5-letter word in 6 tries. Green = right place, Yellow = wrong place.</p>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <div id="wordMsg" style="font-size:15px;min-height:22px;color:var(--gold);"></div>
+    <button class="btn btn-dark btn-sm" id="newWordBtn">New Word</button>
+  </div>
+  <div id="wordGrid"></div>
+  <div class="word-keyboard" id="wordKeyboard"></div>
+</section>
+
+<!-- ================================================================
+     SECTION: MEMORY MATRIX
+     ================================================================ -->
+<section class="game-section" id="tab-memory">
+  <h2 class="section-title">Memory Matrix</h2>
+  <p class="section-sub">Watch the pattern light up, then repeat it. Gets harder each round.</p>
+  <div class="memory-header">
+    <div class="memory-stat"><div class="lbl">Level</div><div class="val" id="memLevel">1</div></div>
+    <div class="memory-stat"><div class="lbl">Score</div><div class="val" id="memScore">0</div></div>
+    <div class="memory-stat"><div class="lbl">Best</div><div class="val" id="memBest">0</div></div>
+  </div>
+  <div id="memoryGrid"></div>
+  <div id="memoryMsg"></div>
+  <div style="display:flex;gap:10px;justify-content:center;margin-top:16px;">
+    <button class="btn btn-gold" id="startMemBtn">▶ Start</button>
+    <button class="btn btn-dark btn-sm" id="resetMemBtn">↺ Reset</button>
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION: CHAIN REACTION (2048)
+     ================================================================ -->
+<section class="game-section" id="tab-chain">
+  <h2 class="section-title">Chain Reaction</h2>
+  <p class="section-sub">Slide tiles to merge matching numbers. Reach 2048 to win. Use arrow keys or swipe.</p>
+  <div class="chain-score-row">
+    <div class="chain-score"><div class="lbl">Score</div><div class="val" id="chainScore">0</div></div>
+    <div class="chain-score"><div class="lbl">Best</div><div class="val" id="chainBest">0</div></div>
+    <button class="btn btn-gold btn-sm" id="newChainBtn" style="align-self:center;">New Game</button>
+  </div>
+  <div id="chainGrid"></div>
+  <div id="chainMsg"></div>
+  <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:10px;">Arrow keys or swipe to move tiles</p>
+</section>
+
+<!-- ================================================================
+     SECTION: TRIVIA VAULT
+     ================================================================ -->
+<section class="game-section" id="tab-trivia">
+  <h2 class="section-title">Trivia Vault</h2>
+  <p class="section-sub">Test your knowledge across subjects. Save interesting facts directly to your notes.</p>
+  <div class="trivia-subjects" id="triviaSubjects">
+    <button class="subject-btn active" data-subject="general">🌍 General</button>
+    <button class="subject-btn" data-subject="tech">💻 Technology</button>
+    <button class="subject-btn" data-subject="games">🎮 Games</button>
+    <button class="subject-btn" data-subject="science">🔬 Science</button>
+    <button class="subject-btn" data-subject="math">📐 Math</button>
+    <button class="subject-btn" data-subject="english">📚 English</button>
+    <button class="subject-btn" data-subject="history">🏛 History</button>
+    <button class="subject-btn" data-subject="geography">🗺 Geography</button>
+  </div>
+  <div class="trivia-score-row">
+    <span style="font-size:14px;color:var(--muted);">Score:</span>
+    <span class="trivia-score" id="triviaScore">0 / 0</span>
+    <button class="btn btn-dark btn-sm" id="resetTriviaBtn">↺ Reset Score</button>
+  </div>
+  <div class="trivia-card" id="triviaCard">
+    <div class="trivia-subject-tag" id="triviaTag" style="background:rgba(201,151,74,.2);color:var(--gold);">General</div>
+    <div class="trivia-q" id="triviaQ">Loading question...</div>
+    <div class="trivia-options" id="triviaOpts"></div>
+  </div>
+  <div class="trivia-result" id="triviaResult">
+    <div class="trivia-explain" id="triviaExplain"></div>
+    <button class="trivia-save-btn" id="triviaSaveBtn">📝 Save to Notes</button>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    <button class="btn btn-gold" id="nextTriviaBtn">Next Question →</button>
+  </div>
+</section>
+
+<!-- ================================================================
+     SECTION: MIND BENDER
+     ================================================================ -->
+<section class="game-section" id="tab-mindbender">
+  <h2 class="section-title">Mind Bender</h2>
+  <p class="section-sub">Three brain-training puzzles in one place. Keep your mind sharp!</p>
+  <div class="puzzle-tabs">
+    <button class="puzzle-tab active" data-puzzle="lights">💡 Lights Out</button>
+    <button class="puzzle-tab" data-puzzle="math">⚡ Math Flash</button>
+    <button class="puzzle-tab" data-puzzle="pattern">🔢 Pattern Finder</button>
+  </div>
+
+  <!-- LIGHTS OUT -->
+  <div id="puzzleLights">
+    <p style="text-align:center;font-size:14px;color:var(--muted);margin-bottom:16px;">Click a light to toggle it and its neighbors. Turn all lights OFF.</p>
+    <div id="lightsGrid"></div>
+    <div id="lightsMsg" style="text-align:center;font-size:15px;color:var(--gold);min-height:22px;margin-bottom:12px;"></div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-gold btn-sm" id="newLightsBtn">New Puzzle</button>
+      <span style="display:flex;align-items:center;font-size:14px;color:var(--muted);">Moves: <span id="lightsMoves" style="color:var(--gold);margin-left:6px;font-family:var(--font-m);">0</span></span>
+    </div>
+  </div>
+
+  <!-- MATH FLASH -->
+  <div id="puzzleMath" style="display:none;">
+    <div class="math-q" id="mathQ">3 × 7 = ?</div>
+    <input type="number" class="math-input" id="mathInput" placeholder="?" autocomplete="off"/>
+    <div id="mathMsg" style="text-align:center;font-size:15px;color:var(--gold);min-height:22px;margin-bottom:12px;"></div>
+    <div style="display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-gold btn-sm" id="mathSubmit">Submit</button>
+      <span class="math-streak">Streak: <span id="mathStreak">0</span></span>
+      <span class="math-streak">Best: <span id="mathBest">0</span></span>
+    </div>
+  </div>
+
+  <!-- PATTERN FINDER -->
+  <div id="puzzlePattern" style="display:none;">
+    <p style="text-align:center;font-size:14px;color:var(--muted);margin-bottom:16px;">Find the pattern and choose the missing number.</p>
+    <div class="pattern-seq" id="patternSeq"></div>
+    <div class="pattern-opts" id="patternOpts"></div>
+    <div id="patternMsg" style="text-align:center;font-size:15px;color:var(--gold);min-height:22px;margin-bottom:12px;"></div>
+    <button class="btn btn-gold btn-sm" id="newPatternBtn" style="display:block;margin:0 auto;">Next Pattern</button>
+  </div>
+</section>
+
+<!-- TOAST -->
+<div id="toast">✓ Saved to Notes!</div>
+
+<!-- ================================================================
+     JAVASCRIPT
+     ================================================================ -->
+<script>
+/* ---- TAB SWITCHING ---- */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.game-section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ================================================================
+   TIMEKEEPER
+   ================================================================ */
+document.querySelectorAll('.clock-tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.clock-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('clockPane').style.display='none';
+    document.getElementById('stopwatchPane').style.display='none';
+    document.getElementById('timerPane').style.display='none';
+    const map={clock:'clockPane',stopwatch:'stopwatchPane',timer:'timerPane'};
+    document.getElementById(map[t.dataset.clock]).style.display='block';
+  });
+});
+
+/* Live Clock */
+function updateClock(){
+  const tz=document.getElementById('tzSelect').value;
+  let now=new Date();
+  let opts={hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false};
+  let dopts={weekday:'long',year:'numeric',month:'long',day:'numeric'};
+  if(tz!=='local'){opts.timeZone=tz;dopts.timeZone=tz;}
+  document.getElementById('liveClock').textContent=now.toLocaleTimeString([],opts);
+  document.getElementById('liveDate').textContent=now.toLocaleDateString([],dopts);
+}
+setInterval(updateClock,1000);updateClock();
+document.getElementById('tzSelect').addEventListener('change',updateClock);
+
+/* Stopwatch */
+let swInt=null,swMs=0,swRunning=false,lapCount=0;
+function swFmt(ms){
+  const h=Math.floor(ms/3600000),m=Math.floor(ms%3600000/60000),s=Math.floor(ms%60000/1000),cs=Math.floor(ms%1000/10);
+  if(h>0) return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}<span>.${String(cs).padStart(2,'0')}</span>`;
+}
+let swLast=0;
+document.getElementById('swStart').addEventListener('click',()=>{
+  if(swRunning){clearInterval(swInt);swRunning=false;document.getElementById('swStart').textContent='▶ Resume';}
+  else{swLast=Date.now()-swMs;swInt=setInterval(()=>{swMs=Date.now()-swLast;document.getElementById('swDisplay').innerHTML=swFmt(swMs);},16);swRunning=true;document.getElementById('swStart').textContent='⏸ Pause';}
+});
+document.getElementById('swLap').addEventListener('click',()=>{
+  if(!swRunning&&swMs===0)return;lapCount++;
+  const d=document.getElementById('lapList');
+  const el=document.createElement('div');
+  el.style.cssText='display:flex;justify-content:space-between;padding:6px 12px;background:var(--panel2);border-radius:8px;font-family:var(--font-m);font-size:14px;';
+  el.innerHTML=`<span style="color:var(--muted)">Lap ${lapCount}</span><span style="color:var(--gold)">${document.getElementById('swDisplay').textContent}</span>`;
+  d.insertBefore(el,d.firstChild);
+});
+document.getElementById('swReset').addEventListener('click',()=>{
+  clearInterval(swInt);swMs=0;swRunning=false;swLast=0;lapCount=0;
+  document.getElementById('swDisplay').innerHTML='00:00<span>.00</span>';
+  document.getElementById('swStart').textContent='▶ Start';
+  document.getElementById('lapList').innerHTML='';
+});
+
+/* Timer */
+let timerInt=null,timerRemaining=0,timerRunning=false,timerTotal=0;
+document.getElementById('timerStart').addEventListener('click',()=>{
+  if(!timerRunning){
+    if(timerRemaining===0){
+      const h=parseInt(document.getElementById('timerH').value)||0;
+      const m=parseInt(document.getElementById('timerM').value)||0;
+      const s=parseInt(document.getElementById('timerS').value)||0;
+      timerTotal=(h*3600+m*60+s)*1000;timerRemaining=timerTotal;
+      if(timerRemaining===0)return;
+    }
+    document.getElementById('timerInputs').style.display='none';
+    document.getElementById('timerDisplay').style.display='block';
+    timerRunning=true;document.getElementById('timerStart').textContent='⏸ Pause';
+    const tick=()=>{
+      timerRemaining-=1000;
+      if(timerRemaining<=0){timerRemaining=0;clearInterval(timerInt);timerRunning=false;document.getElementById('timerMsg').textContent='⏰ Time\'s up!';document.getElementById('timerStart').textContent='▶ Start';}
+      const tot=timerRemaining/1000,h=Math.floor(tot/3600),m=Math.floor(tot%3600/60),s=Math.floor(tot%60);
+      const str=h>0?`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`:
+                    `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+      document.getElementById('timerDisplay').innerHTML=str.slice(0,-3)+'<span>'+str.slice(-3)+'</span>';
+    };
+    tick();timerInt=setInterval(tick,1000);
+  } else {clearInterval(timerInt);timerRunning=false;document.getElementById('timerStart').textContent='▶ Resume';}
+});
+document.getElementById('timerReset').addEventListener('click',()=>{
+  clearInterval(timerInt);timerRunning=false;timerRemaining=0;
+  document.getElementById('timerInputs').style.display='flex';
+  document.getElementById('timerDisplay').style.display='none';
+  document.getElementById('timerMsg').textContent='';
+  document.getElementById('timerStart').textContent='▶ Start';
+});
+
+/* ================================================================
+   NUMBER STORM (Sudoku)
+   ================================================================ */
+let sudokuPuzzle=[], sudokuSolution=[], sudokuSelected=null, sudokuTimerInt=null, sudokuSeconds=0, sudokuDiff='easy';
+const DIFFICULTIES={easy:35,medium:27,hard:20};
+
+function generateSudoku(){
+  // Create a solved grid first
+  const grid=Array.from({length:9},()=>Array(9).fill(0));
+  fillSudoku(grid,0);
+  sudokuSolution=grid.map(r=>[...r]);
+  // Remove cells based on difficulty
+  const clues=DIFFICULTIES[sudokuDiff];
+  const puzzle=grid.map(r=>[...r]);
+  let removed=0,target=81-clues;
+  const positions=[...Array(81).keys()].sort(()=>Math.random()-.5);
+  for(const pos of positions){
+    if(removed>=target)break;
+    const r=Math.floor(pos/9),c=pos%9;
+    puzzle[r][c]=0;removed++;
+  }
+  sudokuPuzzle=puzzle.map(r=>r.map(v=>({val:v,given:v!==0,user:0,error:false})));
+  renderSudoku();
+  resetSudokuTimer();
+}
+
+function fillSudoku(grid,pos){
+  if(pos===81)return true;
+  const r=Math.floor(pos/9),c=pos%9;
+  const nums=[1,2,3,4,5,6,7,8,9].sort(()=>Math.random()-.5);
+  for(const n of nums){
+    if(validSudoku(grid,r,c,n)){grid[r][c]=n;if(fillSudoku(grid,pos+1))return true;grid[r][c]=0;}
+  }
+  return false;
+}
+
+function validSudoku(g,r,c,n){
+  for(let i=0;i<9;i++){if(g[r][i]===n||g[i][c]===n)return false;}
+  const br=Math.floor(r/3)*3,bc=Math.floor(c/3)*3;
+  for(let i=0;i<3;i++)for(let j=0;j<3;j++){if(g[br+i][bc+j]===n)return false;}
+  return true;
+}
+
+function renderSudoku(){
+  const grid=document.getElementById('sudokuGrid');grid.innerHTML='';
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+    const cell=sudokuPuzzle[r][c];
+    const d=document.createElement('div');d.className='sudoku-cell';
+    if(c===2||c===5)d.classList.add('box-right');
+    if(r===2||r===5)d.classList.add('box-bottom');
+    if(cell.given){d.classList.add('given');d.textContent=cell.val;}
+    else if(cell.user){d.textContent=cell.user;if(cell.error)d.classList.add('error');}
+    if(sudokuSelected&&sudokuSelected[0]===r&&sudokuSelected[1]===c)d.classList.add('selected');
+    const selVal=sudokuSelected?sudokuPuzzle[sudokuSelected[0]][sudokuSelected[1]]:null;
+    const myVal=cell.given?cell.val:cell.user;
+    if(selVal&&myVal&&(selVal.given||selVal.user)&&myVal===(selVal.given?selVal.val:selVal.user))d.classList.add('same-num');
+    d.addEventListener('click',()=>{if(!cell.given){sudokuSelected=[r,c];renderSudoku();}});
+    grid.appendChild(d);
+  }
+}
+
+// Numpad
+const numpad=document.getElementById('sudokuNumpad');
+for(let n=1;n<=9;n++){
+  const b=document.createElement('button');b.className='num-btn';b.textContent=n;
+  b.addEventListener('click',()=>sudokuInput(n));numpad.appendChild(b);
+}
+const eb=document.createElement('button');eb.className='num-btn erase';eb.textContent='⌫ Erase';
+eb.addEventListener('click',()=>sudokuInput(0));numpad.appendChild(eb);
+
+function sudokuInput(n){
+  if(!sudokuSelected)return;
+  const [r,c]=sudokuSelected;
+  const cell=sudokuPuzzle[r][c];
+  if(cell.given)return;
+  cell.user=n;
+  cell.error=n!==0&&sudokuSolution[r][c]!==n;
+  renderSudoku();
+  checkSudokuWin();
+}
+
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('tab-numstorm').classList.contains('active')&&sudokuSelected){
+    const n=parseInt(e.key);
+    if(n>=1&&n<=9)sudokuInput(n);
+    if(e.key==='Backspace'||e.key==='Delete')sudokuInput(0);
+  }
+});
+
+function checkSudokuWin(){
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+    const cell=sudokuPuzzle[r][c];
+    if((cell.given?cell.val:cell.user)!==sudokuSolution[r][c])return;
+  }
+  clearInterval(sudokuTimerInt);
+  document.getElementById('sudokuMsg').textContent=`🎉 Solved in ${document.getElementById('sudokuTimer').textContent}!`;
+}
+
+function resetSudokuTimer(){
+  clearInterval(sudokuTimerInt);sudokuSeconds=0;
+  document.getElementById('sudokuTimer').textContent='00:00';
+  document.getElementById('sudokuMsg').textContent='';
+  sudokuTimerInt=setInterval(()=>{
+    sudokuSeconds++;
+    const m=Math.floor(sudokuSeconds/60),s=sudokuSeconds%60;
+    document.getElementById('sudokuTimer').textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  },1000);
+}
+
+document.getElementById('newSudokuBtn').addEventListener('click',()=>{sudokuSelected=null;generateSudoku();});
+document.getElementById('sudokuNew2').addEventListener('click',()=>{sudokuSelected=null;generateSudoku();});
+document.getElementById('sudokuHint').addEventListener('click',()=>{
+  const empties=[];
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){if(!sudokuPuzzle[r][c].given&&!sudokuPuzzle[r][c].user)empties.push([r,c]);}
+  if(!empties.length)return;
+  const [r,c]=empties[Math.floor(Math.random()*empties.length)];
+  sudokuPuzzle[r][c].user=sudokuSolution[r][c];sudokuPuzzle[r][c].error=false;renderSudoku();
+});
+document.getElementById('sudokuSolve').addEventListener('click',()=>{
+  for(let r=0;r<9;r++)for(let c=0;c<9;c++){
+    if(!sudokuPuzzle[r][c].given){sudokuPuzzle[r][c].user=sudokuSolution[r][c];sudokuPuzzle[r][c].error=false;}
+  }
+  clearInterval(sudokuTimerInt);renderSudoku();document.getElementById('sudokuMsg').textContent='Puzzle solved!';
+});
+document.querySelectorAll('.diff-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.diff-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');sudokuDiff=b.dataset.diff;sudokuSelected=null;generateSudoku();
+  });
+});
+generateSudoku();
+
+/* ================================================================
+   INK FLOOD (Color Fill)
+   ================================================================ */
+const FLOOD_COLORS=['#e74c3c','#e67e22','#f1c40f','#2ecc71','#3498db','#9b59b6'];
+let floodGrid=[],floodSize=16,floodMoves=0,floodMax=25;
+
+function initFlood(){
+  floodSize=parseInt(document.getElementById('floodSize').value);
+  floodMax=floodSize===12?20:floodSize===16?25:35;
+  document.getElementById('floodMaxMsg').textContent=`Max: ${floodMax} moves`;
+  floodGrid=Array.from({length:floodSize},()=>Array.from({length:floodSize},()=>Math.floor(Math.random()*FLOOD_COLORS.length)));
+  floodMoves=0;document.getElementById('floodMoves').textContent='0';
+  document.getElementById('floodMsg').textContent='';
+  renderFlood();
+}
+
+function renderFlood(){
+  const canvas=document.getElementById('floodCanvas');
+  const size=Math.min(400,window.innerWidth-60);
+  canvas.width=canvas.height=size;
+  const ctx=canvas.getContext('2d');
+  const cs=size/floodSize;
+  for(let r=0;r<floodSize;r++)for(let c=0;c<floodSize;c++){
+    ctx.fillStyle=FLOOD_COLORS[floodGrid[r][c]];
+    ctx.fillRect(c*cs,r*cs,cs,cs);
+  }
+}
+
+function floodFill(r,c,oldC,newC){
+  if(r<0||r>=floodSize||c<0||c>=floodSize||floodGrid[r][c]!==oldC||oldC===newC)return;
+  floodGrid[r][c]=newC;
+  floodFill(r+1,c,oldC,newC);floodFill(r-1,c,oldC,newC);
+  floodFill(r,c+1,oldC,newC);floodFill(r,c-1,oldC,newC);
+}
+
+function doFlood(colorIdx){
+  const oldC=floodGrid[0][0];
+  if(oldC===colorIdx)return;
+  floodFill(0,0,oldC,colorIdx);
+  floodMoves++;document.getElementById('floodMoves').textContent=floodMoves;
+  renderFlood();
+  const first=floodGrid[0][0];
+  if(floodGrid.every(r=>r.every(c=>c===first))){
+    document.getElementById('floodMsg').textContent='🎉 Flooded! '+(floodMoves<=floodMax?'Great job!':'Try fewer moves next time!');return;
+  }
+  if(floodMoves>=floodMax) document.getElementById('floodMsg').textContent='Out of moves! Try again.';
+}
+
+// Color buttons
+const fc=document.getElementById('floodColors');
+FLOOD_COLORS.forEach((col,i)=>{
+  const b=document.createElement('button');b.className='flood-color-btn';b.style.background=col;
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.flood-color-btn').forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');doFlood(i);
+  });
+  fc.appendChild(b);
+});
+
+document.getElementById('newFloodBtn').addEventListener('click',initFlood);
+document.getElementById('floodSize').addEventListener('change',initFlood);
+initFlood();
+
+/* ================================================================
+   WORD WEAVER (Wordle)
+   ================================================================ */
+const WORDS=['CRANE','BRAVE','FLASK','GHOST','PIANO','SQUIB','FLINT','DRIVE','OXIDE','PERCH','MARSH','BLUNT','STARK','GRAZE','KNEEL','SWAMP','PROXY','CRIMP','FIZZY','OXIDE','PLUMB','QUIRK','TRYST','VIVID','WALTZ','AXIOM','BLAZE','CLUMP','DRAFT','EMBER','FROWN','GLARE','HASTE','ISLET','JOUST','KNAVE','LURCH','MIRTH','NOTCH','OPTIC','PRISM','QUEST','RIVET','SLUMP','THORN','ULCER','VAULT','WHIRL','XEROX','YACHT'];
+let wordTarget='',wordGuesses=[],wordCurrentRow=0,wordCurrentGuess='',wordOver=false;
+
+function newWord(){
+  wordTarget=WORDS[Math.floor(Math.random()*WORDS.length)];
+  wordGuesses=Array(6).fill(null).map(()=>Array(5).fill(null));
+  wordCurrentRow=0;wordCurrentGuess='';wordOver=false;
+  document.getElementById('wordMsg').textContent='';
+  renderWordGrid();renderWordKeyboard();
+}
+
+function renderWordGrid(){
+  const g=document.getElementById('wordGrid');g.innerHTML='';
+  for(let r=0;r<6;r++)for(let c=0;c<5;c++){
+    const cell=document.createElement('div');cell.className='word-cell';
+    const g2=wordGuesses[r][c];
+    if(g2){cell.textContent=g2.letter;cell.classList.add(g2.state);}
+    else if(r===wordCurrentRow&&c<wordCurrentGuess.length){cell.textContent=wordCurrentGuess[c];cell.classList.add('active');}
+    g.appendChild(cell);
+  }
+}
+
+function renderWordKeyboard(){
+  const rows=['QWERTYUIOP','ASDFGHJKL','ENTER←ZXCVBNM'];
+  const kb=document.getElementById('wordKeyboard');kb.innerHTML='';
+  const stateMap={};
+  for(let r=0;r<wordCurrentRow;r++){
+    wordGuesses[r].forEach(g=>{
+      if(!g)return;
+      if(!stateMap[g.letter]||stateMap[g.letter]==='absent'||(g.state==='correct'))stateMap[g.letter]=g.state;
+    });
+  }
+  rows.forEach(row=>{
+    const rowEl=document.createElement('div');rowEl.className='word-kb-row';
+    row.split('').join(' ').trim().split('  ').forEach(k=>{
+      const b=document.createElement('button');b.className='kb-key';
+      if(k==='ENTER'||k==='←')b.classList.add('kb-wide');
+      b.textContent=k==='←'?'⌫':k;
+      if(stateMap[k])b.classList.add(stateMap[k]);
+      b.addEventListener('click',()=>wordKey(k==='←'?'BACKSPACE':k));
+      rowEl.appendChild(b);
+    });
+    kb.appendChild(rowEl);
+  });
+}
+
+function wordKey(key){
+  if(wordOver)return;
+  if(key==='ENTER'){submitWord();}
+  else if(key==='BACKSPACE'){wordCurrentGuess=wordCurrentGuess.slice(0,-1);renderWordGrid();}
+  else if(key.length===1&&/[A-Z]/.test(key)&&wordCurrentGuess.length<5){wordCurrentGuess+=key;renderWordGrid();}
+}
+
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('tab-wordweaver').classList.contains('active'))return;
+  if(document.querySelector('#tab-mindbender .math-input')===document.activeElement)return;
+  const k=e.key.toUpperCase();
+  if(k==='ENTER')wordKey('ENTER');
+  else if(k==='BACKSPACE')wordKey('BACKSPACE');
+  else if(/^[A-Z]$/.test(k))wordKey(k);
+});
+
+function submitWord(){
+  if(wordCurrentGuess.length!==5){document.getElementById('wordMsg').textContent='Type a 5-letter word!';return;}
+  const result=[];
+  const targetArr=wordTarget.split('');const used=Array(5).fill(false);
+  // first pass: correct
+  wordCurrentGuess.split('').forEach((l,i)=>{
+    if(l===targetArr[i]){result[i]={letter:l,state:'correct'};used[i]=true;}
+  });
+  // second pass: present / absent
+  wordCurrentGuess.split('').forEach((l,i)=>{
+    if(result[i])return;
+    const fi=targetArr.findIndex((t,j)=>!used[j]&&t===l);
+    if(fi!==-1){result[i]={letter:l,state:'present'};used[fi]=true;}
+    else result[i]={letter:l,state:'absent'};
+  });
+  wordGuesses[wordCurrentRow]=result;wordCurrentRow++;wordCurrentGuess='';
+  renderWordGrid();renderWordKeyboard();
+  if(result.every(r=>r.state==='correct')){document.getElementById('wordMsg').textContent='🎉 Brilliant!';wordOver=true;}
+  else if(wordCurrentRow===6){document.getElementById('wordMsg').textContent=`Answer: ${wordTarget}`;wordOver=true;}
+}
+
+document.getElementById('newWordBtn').addEventListener('click',newWord);
+newWord();
+
+/* ================================================================
+   MEMORY MATRIX
+   ================================================================ */
+let memLevel=1,memScore=0,memBest=parseInt(localStorage.getItem('memBest')||'0'),
+    memSequence=[],memPlayerSeq=[],memPhase='idle',memGridSize=4;
+
+document.getElementById('memBest').textContent=memBest;
+
+function startMemory(){
+  memPhase='showing';memSequence=[];memPlayerSeq=[];
+  addToMemSequence();
+}
+
+function addToMemSequence(){
+  const size=memGridSize*memGridSize;
+  let next;
+  do{next=Math.floor(Math.random()*size);}while(memSequence.includes(next));
+  memSequence.push(next);
+  document.getElementById('memoryMsg').textContent='Watch the pattern...';
+  document.getElementById('startMemBtn').disabled=true;
+  showMemSequence();
+}
+
+function showMemSequence(){
+  renderMemGrid();
+  let i=0;
+  const interval=setInterval(()=>{
+    // un-highlight prev
+    if(i>0){const prev=document.querySelector(`#memoryGrid .mem-cell:nth-child(${memSequence[i-1]+1})`);if(prev)prev.classList.remove('highlight');}
+    if(i<memSequence.length){
+      const cell=document.querySelector(`#memoryGrid .mem-cell:nth-child(${memSequence[i]+1})`);
+      if(cell)cell.classList.add('highlight');i++;
+    } else {
+      clearInterval(interval);
+      setTimeout(()=>{
+        renderMemGrid();memPhase='input';memPlayerSeq=[];
+        document.getElementById('memoryMsg').textContent='Repeat the pattern!';
+      },600);
+    }
+  },700);
+}
+
+function renderMemGrid(){
+  const g=document.getElementById('memoryGrid');
+  const size=Math.min(3+Math.floor(memLevel/3),6);memGridSize=size;
+  g.style.gridTemplateColumns=`repeat(${size},1fr)`;
+  const maxW=Math.min(400,window.innerWidth-60);
+  g.style.maxWidth=maxW+'px';
+  g.innerHTML='';
+  const emojis=['⭐','🌙','❤️','⚡','🔥','💎','🌊','🍀','🎯','🎲','🎸','🏆','🦋','🌸','🎪','🚀'];
+  for(let i=0;i<size*size;i++){
+    const cell=document.createElement('div');cell.className='mem-cell';
+    cell.dataset.idx=i;
+    cell.textContent=emojis[i%emojis.length];
+    cell.addEventListener('click',()=>{if(memPhase==='input')memPlayerClick(i);});
+    g.appendChild(cell);
+  }
+}
+
+function memPlayerClick(idx){
+  if(memPhase!=='input')return;
+  const cell=document.querySelector(`#memoryGrid .mem-cell:nth-child(${idx+1})`);
+  memPlayerSeq.push(idx);
+  const expected=memSequence[memPlayerSeq.length-1];
+  if(idx===expected){
+    cell.classList.add('correct');
+    setTimeout(()=>cell.classList.remove('correct'),400);
+    if(memPlayerSeq.length===memSequence.length){
+      memScore+=memLevel*10;
+      if(memScore>memBest){memBest=memScore;localStorage.setItem('memBest',memBest);document.getElementById('memBest').textContent=memBest;}
+      document.getElementById('memScore').textContent=memScore;
+      memLevel++;document.getElementById('memLevel').textContent=memLevel;
+      document.getElementById('memoryMsg').textContent='✓ Correct! Next level...';
+      memPhase='idle';
+      setTimeout(()=>addToMemSequence(),1200);
+    }
+  } else {
+    cell.classList.add('wrong');
+    document.getElementById('memoryMsg').textContent=`✗ Wrong! You reached level ${memLevel}`;
+    memPhase='gameover';document.getElementById('startMemBtn').disabled=false;
+  }
+}
+
+document.getElementById('startMemBtn').addEventListener('click',startMemory);
+document.getElementById('resetMemBtn').addEventListener('click',()=>{
+  memLevel=1;memScore=0;memPhase='idle';memSequence=[];memPlayerSeq=[];
+  document.getElementById('memLevel').textContent='1';document.getElementById('memScore').textContent='0';
+  document.getElementById('memoryMsg').textContent='';document.getElementById('startMemBtn').disabled=false;
+  renderMemGrid();
+});
+renderMemGrid();
+
+/* ================================================================
+   CHAIN REACTION (2048)
+   ================================================================ */
+let chainBoard=Array.from({length:4},()=>Array(4).fill(0));
+let chainScore=0,chainBest2=parseInt(localStorage.getItem('chainBest')||'0'),chainWon=false;
+document.getElementById('chainBest').textContent=chainBest2;
+
+function addChainTile(){
+  const empty=[];
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){if(chainBoard[r][c]===0)empty.push([r,c]);}
+  if(!empty.length)return;
+  const [r,c]=empty[Math.floor(Math.random()*empty.length)];
+  chainBoard[r][c]=Math.random()<.9?2:4;
+}
+
+function newChain(){
+  chainBoard=Array.from({length:4},()=>Array(4).fill(0));
+  chainScore=0;chainWon=false;
+  document.getElementById('chainScore').textContent='0';
+  document.getElementById('chainMsg').textContent='';
+  addChainTile();addChainTile();renderChain();
+}
+
+const CHAIN_COLORS={0:'',2:'c2',4:'c4',8:'c8',16:'c16',32:'c32',64:'c64',128:'c128',256:'c256',512:'c512',1024:'c1024',2048:'c2048'};
+
+function renderChain(){
+  const g=document.getElementById('chainGrid');g.innerHTML='';
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){
+    const v=chainBoard[r][c];const el=document.createElement('div');el.className='chain-cell';
+    if(v){el.textContent=v;const cls=CHAIN_COLORS[Math.min(v,2048)];if(cls)el.classList.add(cls);}
+    else{el.style.background='var(--panel)';el.style.border='2px solid var(--border)';}
+    g.appendChild(el);
+  }
+}
+
+function slideChain(dir){
+  let moved=false;
+  const rotate=(b,n)=>{for(let i=0;i<n;i++){const t=b[0].map((_,j)=>b.map(r=>r[j]).reverse());b.length=0;t.forEach(r=>b.push(r));}};
+  const r2={left:0,up:3,right:2,down:1};rotate(chainBoard,r2[dir]);
+  for(let r=0;r<4;r++){
+    let row=chainBoard[r].filter(v=>v);
+    for(let i=0;i<row.length-1;i++){if(row[i]===row[i+1]){chainScore+=row[i]*2;row[i]*=2;row[i+1]=0;if(row[i]===2048&&!chainWon){chainWon=true;document.getElementById('chainMsg').textContent='🎉 You reached 2048!';} moved=true;}}
+    row=row.filter(v=>v);while(row.length<4)row.push(0);
+    if(row.join()!==chainBoard[r].join())moved=true;chainBoard[r]=row;
+  }
+  rotate(chainBoard,4-r2[dir]);
+  if(moved){addChainTile();document.getElementById('chainScore').textContent=chainScore;if(chainScore>chainBest2){chainBest2=chainScore;localStorage.setItem('chainBest',chainBest2);document.getElementById('chainBest').textContent=chainBest2;}}
+  renderChain();
+  // check game over
+  if(chainBoard.flat().includes(0))return;
+  let canMove=false;
+  for(let r=0;r<4;r++)for(let c=0;c<4;c++){if(c<3&&chainBoard[r][c]===chainBoard[r][c+1])canMove=true;if(r<3&&chainBoard[r][c]===chainBoard[r+1][c])canMove=true;}
+  if(!canMove)document.getElementById('chainMsg').textContent='Game Over!';
+}
+
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('tab-chain').classList.contains('active'))return;
+  const map={ArrowLeft:'left',ArrowRight:'right',ArrowUp:'up',ArrowDown:'down'};
+  if(map[e.key]){e.preventDefault();slideChain(map[e.key]);}
+});
+
+// Touch swipe for chain
+let chainTouchX=0,chainTouchY=0;
+document.getElementById('chainGrid').addEventListener('touchstart',e=>{chainTouchX=e.touches[0].clientX;chainTouchY=e.touches[0].clientY;},{passive:true});
+document.getElementById('chainGrid').addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-chainTouchX,dy=e.changedTouches[0].clientY-chainTouchY;
+  if(Math.abs(dx)>Math.abs(dy)){slideChain(dx>0?'right':'left');}else{slideChain(dy>0?'down':'up');}
+},{passive:true});
+
+document.getElementById('newChainBtn').addEventListener('click',newChain);
+newChain();
+
+/* ================================================================
+   TRIVIA VAULT
+   ================================================================ */
+const TRIVIA_DB={
+general:[
+  {q:"What is the longest river in the world?",opts:["Amazon","Nile","Yangtze","Mississippi"],ans:1,explain:"The Nile River in Africa, stretching approximately 6,650 km, is the world's longest river."},
+  {q:"How many continents are there on Earth?",opts:["5","6","7","8"],ans:2,explain:"Earth has 7 continents: Africa, Antarctica, Asia, Australia, Europe, North America, and South America."},
+  {q:"What is the largest ocean on Earth?",opts:["Atlantic","Indian","Arctic","Pacific"],ans:3,explain:"The Pacific Ocean is the largest, covering more than 165 million square kilometers."},
+  {q:"Which country has the most natural lakes?",opts:["USA","Russia","Canada","Brazil"],ans:2,explain:"Canada has over 2 million lakes, containing about 9% of the world's fresh water."},
+  {q:"What is the smallest country in the world?",opts:["Monaco","San Marino","Liechtenstein","Vatican City"],ans:3,explain:"Vatican City covers just 0.44 km² inside Rome, Italy."},
+  {q:"How many bones are in an adult human body?",opts:["196","206","216","226"],ans:1,explain:"Adult humans have 206 bones. Babies are born with around 270, which fuse over time."},
+  {q:"Which animal is the tallest in the world?",opts:["Elephant","Giraffe","Ostrich","Polar Bear"],ans:1,explain:"Giraffes can reach up to 5.5 metres (18 feet) tall, making them the world's tallest living animal."},
+  {q:"What is the hardest natural substance on Earth?",opts:["Steel","Quartz","Diamond","Obsidian"],ans:2,explain:"Diamond scores 10 on the Mohs hardness scale, making it the hardest known natural material."},
+  {q:"How many chambers does a human heart have?",opts:["2","3","4","5"],ans:2,explain:"The human heart has four chambers: left and right atria, and left and right ventricles."},
+  {q:"What is the chemical formula of water?",opts:["HO","H2O","H3O","OH2"],ans:1,explain:"Water is H2O — two hydrogen atoms bonded to one oxygen atom."},
+  {q:"Which planet is closest to the Sun?",opts:["Venus","Mars","Earth","Mercury"],ans:3,explain:"Mercury is the closest planet to the Sun, orbiting at an average distance of about 57.9 million km."},
+  {q:"How many colors are in a rainbow?",opts:["5","6","7","8"],ans:2,explain:"A rainbow displays seven colors: red, orange, yellow, green, blue, indigo, and violet (ROYGBIV)."},
+  {q:"What gas do plants absorb during photosynthesis?",opts:["Oxygen","Nitrogen","Carbon Dioxide","Hydrogen"],ans:2,explain:"Plants absorb carbon dioxide (CO₂) and use sunlight and water to produce glucose and oxygen."},
+  {q:"Which is the longest bone in the human body?",opts:["Spine","Humerus","Femur","Tibia"],ans:2,explain:"The femur (thigh bone) is the longest and strongest bone in the human body."},
+  {q:"What percentage of Earth's surface is covered by water?",opts:["51%","61%","71%","81%"],ans:2,explain:"About 71% of Earth's surface is covered by water, mostly the oceans."},
+  {q:"Which organ is responsible for filtering blood in the human body?",opts:["Liver","Heart","Kidney","Spleen"],ans:2,explain:"The kidneys filter about 200 litres of blood per day, removing waste as urine."},
+  {q:"What is the fastest land animal?",opts:["Lion","Horse","Cheetah","Greyhound"],ans:2,explain:"The cheetah can reach speeds of up to 112 km/h (70 mph), making it the fastest land animal."},
+  {q:"How many teeth does an adult human have (including wisdom teeth)?",opts:["28","30","32","34"],ans:2,explain:"A full set of adult teeth includes 32 teeth, including 4 wisdom teeth."},
+  {q:"What is the most spoken language in the world by native speakers?",opts:["English","Spanish","Hindi","Mandarin Chinese"],ans:3,explain:"Mandarin Chinese has over 900 million native speakers, the most of any language."},
+  {q:"What is the currency of Japan?",opts:["Won","Yen","Yuan","Baht"],ans:1,explain:"Japan's currency is the Yen (¥), one of the most traded currencies in the world."},
+  {q:"How many seconds are in one hour?",opts:["360","600","3600","6000"],ans:2,explain:"1 hour = 60 minutes × 60 seconds = 3,600 seconds."},
+  {q:"What is the opposite of a nocturnal animal?",opts:["Amphibious","Carnivorous","Diurnal","Migratory"],ans:2,explain:"A diurnal animal is active during the day. Nocturnal animals are active at night."},
+  {q:"Which planet has the most moons?",opts:["Jupiter","Saturn","Uranus","Neptune"],ans:1,explain:"Saturn currently holds the record with 146 confirmed moons, overtaking Jupiter's 95."},
+  {q:"What is the main ingredient in traditional Japanese miso soup?",opts:["Rice","Soy paste","Fish broth","Seaweed"],ans:1,explain:"Miso soup is made from miso paste (fermented soybeans) dissolved in dashi broth."},
+  {q:"How many strings does a standard guitar have?",opts:["4","5","6","7"],ans:2,explain:"A standard acoustic or electric guitar has 6 strings, tuned E-A-D-G-B-e."},
+  {q:"What is the largest internal organ in the human body?",opts:["Heart","Brain","Liver","Lungs"],ans:2,explain:"The liver is the largest internal organ, weighing about 1.5 kg and performing over 500 vital functions."},
+],
+tech:[
+  {q:"What does 'HTTP' stand for?",opts:["HyperText Transfer Protocol","High Transfer Text Process","HyperText Terminal Processor","Host Transfer Text Protocol"],ans:0,explain:"HTTP stands for HyperText Transfer Protocol, the foundation of data communication on the web."},
+  {q:"Who created the Python programming language?",opts:["Microsoft","Sun Microsystems","Guido van Rossum","Google"],ans:2,explain:"Python was created by Guido van Rossum and first released in 1991."},
+  {q:"What does 'RAM' stand for?",opts:["Read Access Memory","Random Access Memory","Rapid Application Memory","Read And Modify"],ans:1,explain:"RAM stands for Random Access Memory — it temporarily stores data your computer is actively using."},
+  {q:"Which language styles web pages?",opts:["JavaScript","HTML","CSS","PHP"],ans:2,explain:"CSS (Cascading Style Sheets) is used to style the visual presentation of web pages."},
+  {q:"What is the binary of decimal 10?",opts:["1000","1010","1100","0110"],ans:1,explain:"Decimal 10 = binary 1010 (1×8 + 0×4 + 1×2 + 0×1)."},
+  {q:"Who co-founded Apple with Steve Jobs?",opts:["Bill Gates","Steve Wozniak","Linus Torvalds","Paul Allen"],ans:1,explain:"Steve Wozniak co-founded Apple Computer with Steve Jobs and Ronald Wayne in 1976."},
+  {q:"What does 'CPU' stand for?",opts:["Central Processing Unit","Computer Processing Utility","Core Processing Unit","Central Program Uploader"],ans:0,explain:"CPU stands for Central Processing Unit — the brain of the computer that executes instructions."},
+  {q:"Which company created the Android operating system?",opts:["Apple","Microsoft","Samsung","Google"],ans:3,explain:"Android was developed by Android Inc., which was acquired by Google in 2005."},
+  {q:"What does 'URL' stand for?",opts:["Universal Resource Link","Uniform Resource Locator","Unified Reference Location","Universal Routing Label"],ans:1,explain:"URL stands for Uniform Resource Locator — the address you type into a browser to reach a website."},
+  {q:"Which programming language is known as the 'language of the web'?",opts:["Python","Java","JavaScript","Ruby"],ans:2,explain:"JavaScript is the primary programming language used in web browsers to create dynamic content."},
+  {q:"What does 'SSD' stand for in storage?",opts:["Super Storage Drive","Static Solid Disk","Solid State Drive","Standard Speed Disk"],ans:2,explain:"SSD stands for Solid State Drive — a storage device with no moving parts, faster than HDDs."},
+  {q:"How many bits are in a byte?",opts:["4","6","8","16"],ans:2,explain:"A byte consists of 8 bits. This is the standard unit of digital information storage."},
+  {q:"What does 'AI' stand for?",opts:["Automated Intelligence","Artificial Intelligence","Advanced Interface","Algorithmic Instruction"],ans:1,explain:"AI stands for Artificial Intelligence — the simulation of human intelligence in machines."},
+  {q:"Which company makes the iPhone?",opts:["Samsung","Sony","Apple","Microsoft"],ans:2,explain:"The iPhone is manufactured and sold by Apple Inc., first released in 2007."},
+  {q:"What language do web browsers primarily read?",opts:["Python","Java","HTML","C++"],ans:2,explain:"Browsers interpret HTML (HyperText Markup Language) to display web pages, along with CSS and JavaScript."},
+  {q:"What is a 'firewall' in computing?",opts:["A cooling system","A security system blocking unauthorized access","A type of SSD","A graphics rendering tool"],ans:1,explain:"A firewall monitors and controls incoming/outgoing network traffic based on security rules."},
+  {q:"Which programming language uses indentation as syntax?",opts:["Java","C++","Python","JavaScript"],ans:2,explain:"Python uses indentation (whitespace) to define code blocks, unlike braces used in other languages."},
+  {q:"What does 'DNS' stand for?",opts:["Data Network Service","Domain Name System","Digital Node Server","Direct Name Signal"],ans:1,explain:"DNS (Domain Name System) translates domain names like 'google.com' into IP addresses."},
+  {q:"What is the latest generation of mobile network standard?",opts:["3G","4G LTE","5G","6G"],ans:2,explain:"5G is the fifth generation of mobile network technology, offering faster speeds and lower latency than 4G."},
+  {q:"What does 'IoT' stand for?",opts:["Internet of Things","Input/Output Terminal","Interface of Technology","Integrated Online Tracker"],ans:0,explain:"IoT stands for Internet of Things — the network of physical devices connected to the internet."},
+],
+games:[
+  {q:"In Minecraft, what material has the highest durability for tools?",opts:["Diamond","Iron","Gold","Netherite"],ans:3,explain:"Netherite (added in Java Edition 1.16) surpasses diamond in durability and strength."},
+  {q:"Which game features the character 'Master Chief'?",opts:["Gears of War","Halo","Call of Duty","Destiny"],ans:1,explain:"Master Chief (John-117) is the protagonist of the Halo franchise by Bungie/343 Industries."},
+  {q:"What year was the original Pac-Man arcade game released?",opts:["1978","1980","1982","1985"],ans:1,explain:"Pac-Man was released by Namco in Japan in May 1980."},
+  {q:"In chess, which piece can only move diagonally?",opts:["Rook","Knight","Bishop","Queen"],ans:2,explain:"The Bishop moves diagonally any number of squares, staying on the same color throughout the game."},
+  {q:"What is the maximum score in a single game of bowling?",opts:["200","250","300","360"],ans:2,explain:"A perfect game in bowling is 300 — twelve consecutive strikes in a single game."},
+  {q:"Which Nintendo character lives in the Mushroom Kingdom?",opts:["Link","Kirby","Mario","Samus"],ans:2,explain:"Mario is Nintendo's iconic plumber who lives in (or rescues) the Mushroom Kingdom."},
+  {q:"How many squares are on a standard chess board?",opts:["32","48","64","80"],ans:2,explain:"A standard chess board has 8×8 = 64 squares, alternating between light and dark colors."},
+  {q:"In Tetris, what is the name of the straight line piece?",opts:["S-piece","O-piece","I-piece","T-piece"],ans:2,explain:"The I-piece (also called a 'line piece') is the long straight piece in Tetris, used to score Tetrises."},
+  {q:"What type of game is 'The Sims'?",opts:["Battle Royale","Life Simulation","First-Person Shooter","Real-Time Strategy"],ans:1,explain:"The Sims is a life simulation game where players control virtual people and manage their lives."},
+  {q:"Which company created the Legend of Zelda series?",opts:["Sega","Sony","Capcom","Nintendo"],ans:3,explain:"The Legend of Zelda series is created by Nintendo, with the first game released in 1986."},
+  {q:"In Pokémon, how many original starter Pokémon are there?",opts:["2","3","4","6"],ans:1,explain:"The original three starters are Bulbasaur (Grass), Charmander (Fire), and Squirtle (Water)."},
+  {q:"What does 'RPG' stand for in gaming?",opts:["Rapid Play Game","Role-Playing Game","Real Player Gaming","Ranked Performance Game"],ans:1,explain:"RPG stands for Role-Playing Game, a genre where players assume the roles of characters in a fictional world."},
+  {q:"Which game popularized the 'Battle Royale' genre on PC?",opts:["Fortnite","PUBG: Battlegrounds","Apex Legends","H1Z1"],ans:1,explain:"PUBG: Battlegrounds (PlayerUnknown's Battlegrounds) launched in 2017 and popularized the Battle Royale genre."},
+  {q:"In Scrabble, which letter has the highest point value?",opts:["Z","Q","X","J"],ans:1,explain:"Both Q and Z are worth 10 points in Scrabble, the highest value tiles in the game."},
+  {q:"What is the world's best-selling video game of all time?",opts:["Tetris","Grand Theft Auto V","Minecraft","Wii Sports"],ans:2,explain:"Minecraft has sold over 238 million copies across all platforms, making it the best-selling game ever."},
+  {q:"In the original Super Mario Bros., what is the name of the princess?",opts:["Daisy","Rosalina","Peach","Zelda"],ans:2,explain:"Mario's goal in the original Super Mario Bros. (1985) is to rescue Princess Peach from Bowser."},
+  {q:"How many players are on a standard basketball team on the court?",opts:["4","5","6","7"],ans:1,explain:"Basketball is played with 5 players per team on the court at a time, for a total of 10 players."},
+  {q:"In playing cards, how many cards are in a standard deck?",opts:["48","50","52","54"],ans:2,explain:"A standard deck has 52 cards (4 suits × 13 cards each), plus 2 optional jokers."},
+  {q:"Which game uses the terms 'strike', 'spare', and 'frame'?",opts:["Darts","Bowling","Billiards","Croquet"],ans:1,explain:"These terms are all from bowling: a strike is knocking all 10 pins on the first ball."},
+  {q:"In Fortnite, how many players start in a standard Battle Royale match?",opts:["50","75","100","150"],ans:2,explain:"A standard Fortnite Battle Royale match starts with 100 players on a shrinking island."},
+],
+science:[
+  {q:"What is the chemical symbol for Gold?",opts:["Go","Gd","Au","Ag"],ans:2,explain:"Gold's symbol 'Au' comes from its Latin name 'Aurum'."},
+  {q:"What is the speed of light (approximately)?",opts:["300,000 km/s","150,000 km/s","600,000 km/s","100,000 km/s"],ans:0,explain:"Light travels at approximately 299,792 km/s in a vacuum."},
+  {q:"What planet is known as the Red Planet?",opts:["Venus","Jupiter","Saturn","Mars"],ans:3,explain:"Mars appears red due to iron oxide (rust) on its surface."},
+  {q:"What force keeps planets in orbit around the sun?",opts:["Magnetism","Gravity","Nuclear force","Centrifugal force"],ans:1,explain:"Gravity is the attractive force that keeps planets in elliptical orbits around the Sun."},
+  {q:"What is the most abundant gas in Earth's atmosphere?",opts:["Oxygen","Carbon Dioxide","Nitrogen","Argon"],ans:2,explain:"Nitrogen makes up about 78% of Earth's atmosphere."},
+  {q:"What is the powerhouse of the cell?",opts:["Nucleus","Ribosome","Mitochondria","Golgi Apparatus"],ans:2,explain:"Mitochondria produce ATP through cellular respiration, earning the nickname 'powerhouse of the cell'."},
+  {q:"What is the atomic number of Carbon?",opts:["4","6","8","12"],ans:1,explain:"Carbon has an atomic number of 6, meaning it has 6 protons in its nucleus."},
+  {q:"What type of bond involves sharing electrons between atoms?",opts:["Ionic bond","Hydrogen bond","Covalent bond","Metallic bond"],ans:2,explain:"Covalent bonds form when two atoms share electrons, unlike ionic bonds where electrons are transferred."},
+  {q:"Which organ produces insulin?",opts:["Liver","Kidney","Pancreas","Stomach"],ans:2,explain:"The pancreas produces insulin, a hormone that regulates blood glucose levels."},
+  {q:"What is the SI unit of electric current?",opts:["Volt","Watt","Ohm","Ampere"],ans:3,explain:"The Ampere (A) is the SI unit of electric current, named after French physicist André-Marie Ampère."},
+  {q:"How many planets are in our solar system?",opts:["7","8","9","10"],ans:1,explain:"There are 8 planets: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, and Neptune. Pluto was reclassified in 2006."},
+  {q:"What gas do humans exhale?",opts:["Oxygen","Hydrogen","Carbon Dioxide","Nitrogen"],ans:2,explain:"Humans exhale carbon dioxide (CO₂) as a byproduct of cellular respiration."},
+  {q:"What is the chemical symbol for Iron?",opts:["Ir","In","Fe","Fr"],ans:2,explain:"Iron's symbol 'Fe' comes from its Latin name 'Ferrum'."},
+  {q:"What is the process by which water turns into vapor?",opts:["Condensation","Precipitation","Evaporation","Sublimation"],ans:2,explain:"Evaporation is the process where liquid water gains energy and transforms into water vapor."},
+  {q:"What is the name of the force that opposes motion between surfaces?",opts:["Gravity","Friction","Tension","Inertia"],ans:1,explain:"Friction is the resistive force between two surfaces in contact, opposing their relative motion."},
+  {q:"What is the name of the layer that protects Earth from UV radiation?",opts:["Troposphere","Stratosphere (ozone layer)","Mesosphere","Ionosphere"],ans:1,explain:"The ozone layer in the stratosphere absorbs most of the Sun's harmful ultraviolet radiation."},
+  {q:"What scientist developed the theory of evolution by natural selection?",opts:["Isaac Newton","Albert Einstein","Charles Darwin","Gregor Mendel"],ans:2,explain:"Charles Darwin published 'On the Origin of Species' in 1859, introducing the theory of evolution by natural selection."},
+  {q:"How many protons does a hydrogen atom have?",opts:["0","1","2","3"],ans:1,explain:"Hydrogen is the simplest element with just 1 proton and typically 0 neutrons."},
+  {q:"What is the chemical symbol for Sodium?",opts:["So","Sa","Sd","Na"],ans:3,explain:"Sodium's symbol 'Na' comes from its Latin name 'Natrium'."},
+  {q:"What unit measures the frequency of sound waves?",opts:["Decibel","Hertz","Watt","Pascal"],ans:1,explain:"Hertz (Hz) measures the number of sound wave cycles per second. Human hearing ranges from about 20 Hz to 20,000 Hz."},
+  {q:"What is the name of the largest moon of Saturn?",opts:["Io","Europa","Titan","Ganymede"],ans:2,explain:"Titan is Saturn's largest moon and the only moon in our solar system with a dense atmosphere."},
+  {q:"DNA stands for what?",opts:["Deoxyribonucleic Acid","Di-Nitrogen Acid","Dynamic Nuclear Atom","Dense Nucleic Array"],ans:0,explain:"DNA (Deoxyribonucleic Acid) carries the genetic instructions for life's development and functioning."},
+  {q:"What is the boiling point of water at sea level?",opts:["90°C","95°C","100°C","110°C"],ans:2,explain:"Water boils at 100°C (212°F) at standard atmospheric pressure (sea level)."},
+  {q:"Which element has the highest melting point?",opts:["Iron","Carbon","Tungsten","Titanium"],ans:2,explain:"Tungsten has the highest melting point of all elements at 3,422°C (6,192°F)."},
+  {q:"How many bones are in the human spine?",opts:["24","26","33","36"],ans:2,explain:"The adult spine has 33 vertebrae, though some fuse to form the sacrum and coccyx, leaving 26 movable segments."},
+  {q:"What gas makes carbonated drinks fizzy?",opts:["Oxygen","Nitrogen","Carbon Dioxide","Argon"],ans:2,explain:"Carbon dioxide (CO₂) dissolved under pressure creates the bubbles in carbonated beverages."},
+],
+math:[
+  {q:"What is the value of π (pi) to 2 decimal places?",opts:["3.12","3.14","3.16","3.18"],ans:1,explain:"Pi (π) ≈ 3.14159… It's the ratio of a circle's circumference to its diameter."},
+  {q:"What is 12 × 12?",opts:["122","132","144","148"],ans:2,explain:"12 × 12 = 144. This is the square of 12."},
+  {q:"What is the square root of 144?",opts:["11","12","13","14"],ans:1,explain:"√144 = 12, since 12 × 12 = 144."},
+  {q:"How many degrees are in a right angle?",opts:["45°","60°","90°","180°"],ans:2,explain:"A right angle measures exactly 90°."},
+  {q:"What is 15% of 200?",opts:["25","30","35","40"],ans:1,explain:"15% of 200 = 0.15 × 200 = 30."},
+  {q:"What is the next prime number after 13?",opts:["14","15","17","19"],ans:2,explain:"17 is the next prime after 13. (14=2×7, 15=3×5, 16=2⁴ are all composite.)"},
+  {q:"What is the sum of angles in any triangle?",opts:["90°","120°","180°","360°"],ans:2,explain:"The three interior angles of any triangle always add up to exactly 180°."},
+  {q:"What is 2 to the power of 10?",opts:["512","1000","1024","2000"],ans:2,explain:"2¹⁰ = 1,024. This is why computer memory is often measured in multiples of 1,024."},
+  {q:"What is the area of a circle with radius 5? (Use π ≈ 3.14)",opts:["15.7","31.4","78.5","157"],ans:2,explain:"Area = π × r² = 3.14 × 25 = 78.5 square units."},
+  {q:"How many sides does a hexagon have?",opts:["5","6","7","8"],ans:1,explain:"A hexagon has 6 sides. Regular hexagons appear naturally in honeycombs."},
+  {q:"What is 25% of 80?",opts:["15","20","25","30"],ans:1,explain:"25% of 80 = 0.25 × 80 = 20. Or simply divide 80 by 4."},
+  {q:"What is the result of 7! (7 factorial)?",opts:["49","720","2520","5040"],ans:3,explain:"7! = 7×6×5×4×3×2×1 = 5,040."},
+  {q:"What type of triangle has all three sides equal?",opts:["Scalene","Isosceles","Equilateral","Right"],ans:2,explain:"An equilateral triangle has three equal sides and three 60° angles."},
+  {q:"What is the Pythagorean theorem?",opts:["a+b=c","a²+b²=c²","a×b=c²","a²-b²=c"],ans:1,explain:"The Pythagorean theorem states that in a right triangle, a² + b² = c², where c is the hypotenuse."},
+  {q:"What is the value of 0! (zero factorial)?",opts:["0","1","Undefined","Infinity"],ans:1,explain:"By mathematical convention, 0! = 1. This is useful in combinatorics and probability."},
+  {q:"If a dozen equals 12, how many in a gross?",opts:["120","122","144","156"],ans:2,explain:"A gross equals 144 items (12 × 12), traditionally used in trade."},
+  {q:"What is the mean of: 4, 8, 6, 10, 12?",opts:["6","7","8","9"],ans:2,explain:"Mean = (4+8+6+10+12) ÷ 5 = 40 ÷ 5 = 8."},
+  {q:"Which of these numbers is irrational?",opts:["0.5","¼","√2","0.333..."],ans:2,explain:"√2 ≈ 1.41421356… is irrational — it cannot be expressed as a simple fraction."},
+  {q:"What is the perimeter of a square with side 7?",opts:["14","21","28","49"],ans:2,explain:"Perimeter of a square = 4 × side = 4 × 7 = 28 units."},
+  {q:"How many zeros are in one billion?",opts:["6","7","8","9"],ans:3,explain:"One billion = 1,000,000,000 which has 9 zeros."},
+  {q:"What is the GCD of 48 and 18?",opts:["3","6","9","12"],ans:1,explain:"GCD(48,18): factors of 18 are 1,2,3,6,9,18; factors of 48 include 6. GCD = 6."},
+  {q:"If x + 5 = 12, what is x?",opts:["5","6","7","8"],ans:2,explain:"x = 12 − 5 = 7. Subtract 5 from both sides of the equation."},
+  {q:"What is 1/3 expressed as a decimal?",opts:["0.3","0.33","0.333...","0.34"],ans:2,explain:"1 ÷ 3 = 0.333… (a repeating decimal, often written as 0.3̄)."},
+  {q:"How many faces does a cube have?",opts:["4","5","6","8"],ans:2,explain:"A cube has 6 faces, all of which are squares of equal size."},
+  {q:"What is the LCM of 4 and 6?",opts:["8","10","12","24"],ans:2,explain:"LCM(4,6) = 12. The smallest number divisible by both 4 and 6 is 12."},
+  {q:"What is 144 ÷ 12?",opts:["10","11","12","13"],ans:2,explain:"144 ÷ 12 = 12. This is the inverse of 12 × 12 = 144."},
+  {q:"How many degrees are in a full rotation?",opts:["180°","270°","360°","720°"],ans:2,explain:"A full rotation (one complete circle) equals 360 degrees."},
+],
+english:[
+  {q:"What is a synonym for 'happy'?",opts:["Melancholy","Elated","Anxious","Somber"],ans:1,explain:"'Elated' means very happy or proud. Other synonyms include joyful, pleased, and content."},
+  {q:"Which of these is a palindrome?",opts:["Level","Table","Chair","Flame"],ans:0,explain:"'Level' reads the same forwards and backwards — that's a palindrome!"},
+  {q:"What literary device repeats consonant sounds at the start of words?",opts:["Simile","Metaphor","Alliteration","Onomatopoeia"],ans:2,explain:"Alliteration repeats the same initial consonant sound, like 'Peter Piper picked a peck'."},
+  {q:"What is the plural of 'criterion'?",opts:["Criterions","Criteria","Criterias","Criteriae"],ans:1,explain:"'Criteria' is the correct Latin-derived plural of 'criterion'."},
+  {q:"Which word means 'the fear of spiders'?",opts:["Acrophobia","Arachnophobia","Claustrophobia","Hydrophobia"],ans:1,explain:"Arachnophobia is the fear of spiders, from Greek 'arachne' (spider) + 'phobos' (fear)."},
+  {q:"What is an antonym of 'opaque'?",opts:["Dark","Dense","Transparent","Thick"],ans:2,explain:"'Transparent' (allowing light through) is the antonym of 'opaque' (blocking light)."},
+  {q:"Which part of speech describes a noun?",opts:["Verb","Adverb","Adjective","Conjunction"],ans:2,explain:"An adjective modifies or describes a noun (e.g., 'the tall tree' — 'tall' is the adjective)."},
+  {q:"What is the correct spelling?",opts:["Accomodate","Accommodate","Accommadate","Acomodate"],ans:1,explain:"'Accommodate' has double-c and double-m: ac-com-mo-date."},
+  {q:"Which word is an example of onomatopoeia?",opts:["Beautiful","Sizzle","Quickly","Thought"],ans:1,explain:"'Sizzle' imitates the sound it describes — that's onomatopoeia. Other examples: buzz, crack, whoosh."},
+  {q:"What is the term for a word that sounds the same but has a different meaning?",opts:["Synonym","Antonym","Homophone","Homograph"],ans:2,explain:"Homophones sound alike but differ in meaning (e.g., 'there', 'their', 'they're')."},
+  {q:"Which of these sentences is in passive voice?",opts:["She wrote a letter","The letter was written by her","She will write a letter","She has written a letter"],ans:1,explain:"'The letter was written by her' is passive voice — the subject receives the action rather than performing it."},
+  {q:"What does the prefix 'un-' mean?",opts:["Before","Again","Not","After"],ans:2,explain:"The prefix 'un-' means 'not' or reverses the meaning (e.g., 'unhappy' = not happy)."},
+  {q:"Which literary device compares two things using 'like' or 'as'?",opts:["Metaphor","Simile","Personification","Hyperbole"],ans:1,explain:"A simile uses 'like' or 'as' to compare (e.g., 'fast as lightning'). A metaphor states the comparison directly."},
+  {q:"What is the superlative form of 'good'?",opts:["Gooder","Better","Goodest","Best"],ans:3,explain:"Good → Better (comparative) → Best (superlative). These are irregular forms that must be memorized."},
+  {q:"Which of these is a conjunction?",opts:["Quickly","Beautiful","However","Swim"],ans:2,explain:"'However' is a conjunctive adverb/conjunction connecting clauses. Other examples: and, but, because, although."},
+  {q:"What is the term for exaggeration used for effect?",opts:["Irony","Metaphor","Understatement","Hyperbole"],ans:3,explain:"Hyperbole is deliberate exaggeration for emphasis or effect (e.g., 'I've told you a million times')."},
+  {q:"Which punctuation mark introduces a list or explains what came before?",opts:["Semicolon","Comma","Colon","Dash"],ans:2,explain:"A colon (:) introduces a list, explanation, or quotation that follows."},
+  {q:"What is the past tense of the verb 'to speak'?",opts:["Speaked","Spoken","Spoke","Speaks"],ans:2,explain:"'Spoke' is the simple past tense of 'speak' (an irregular verb). 'Spoken' is the past participle."},
+  {q:"What literary technique gives human qualities to non-human things?",opts:["Alliteration","Personification","Allusion","Assonance"],ans:1,explain:"Personification gives human traits to inanimate objects or abstract concepts (e.g., 'the wind whispered')."},
+  {q:"Which word correctly completes: 'Neither the students nor the teacher ___ ready'?",opts:["were","are","was","been"],ans:2,explain:"When 'neither...nor' joins subjects, the verb agrees with the nearest subject. 'Teacher' is singular, so 'was' is correct."},
+],
+history:[
+  {q:"In what year did World War II end?",opts:["1943","1944","1945","1946"],ans:2,explain:"World War II ended in 1945 — VE Day (Europe) was May 8, VJ Day (Japan) was September 2."},
+  {q:"Who was the first person to walk on the Moon?",opts:["Buzz Aldrin","Yuri Gagarin","Neil Armstrong","John Glenn"],ans:2,explain:"Neil Armstrong became the first human to walk on the Moon on July 20, 1969 during Apollo 11."},
+  {q:"The Great Wall of China was primarily built during which dynasty?",opts:["Han","Tang","Ming","Qing"],ans:2,explain:"While construction began earlier, the Great Wall was largely built and reinforced during the Ming Dynasty (1368–1644)."},
+  {q:"What ancient wonder was located in Alexandria, Egypt?",opts:["Colossus of Rhodes","Hanging Gardens","The Great Lighthouse","Temple of Artemis"],ans:2,explain:"The Lighthouse of Alexandria (Pharos) was one of the Seven Wonders of the Ancient World."},
+  {q:"Who invented the telephone?",opts:["Thomas Edison","Nikola Tesla","Alexander Graham Bell","Guglielmo Marconi"],ans:2,explain:"Alexander Graham Bell is credited with inventing the first practical telephone in 1876."},
+  {q:"In what year did the Berlin Wall fall?",opts:["1985","1987","1989","1991"],ans:2,explain:"The Berlin Wall fell on November 9, 1989, symbolizing the end of the Cold War division of Germany."},
+  {q:"Who was the first Emperor of Rome?",opts:["Julius Caesar","Nero","Augustus","Caligula"],ans:2,explain:"Augustus (born Octavian) became the first Roman Emperor in 27 BC after defeating Mark Antony and Cleopatra."},
+  {q:"What year did the Titanic sink?",opts:["1908","1910","1912","1914"],ans:2,explain:"The RMS Titanic sank on April 15, 1912, after striking an iceberg on its maiden voyage."},
+  {q:"Which empire was ruled by Genghis Khan?",opts:["Ottoman Empire","Roman Empire","Mongol Empire","Byzantine Empire"],ans:2,explain:"Genghis Khan founded and ruled the Mongol Empire, which became the largest contiguous empire in history."},
+  {q:"What was the name of the first artificial satellite launched into space?",opts:["Explorer 1","Vostok","Sputnik 1","Luna 1"],ans:2,explain:"Sputnik 1 was launched by the Soviet Union on October 4, 1957 — the world's first artificial satellite."},
+  {q:"Who wrote the Declaration of Independence?",opts:["George Washington","Benjamin Franklin","John Adams","Thomas Jefferson"],ans:3,explain:"Thomas Jefferson was the primary author of the US Declaration of Independence, adopted on July 4, 1776."},
+  {q:"In which city did the 1969 Woodstock music festival take place?",opts:["New York City","Los Angeles","Bethel, New York","San Francisco"],ans:2,explain:"Woodstock was held on a dairy farm in Bethel, New York (near the town of Woodstock) in August 1969."},
+  {q:"Which ancient civilization built the pyramids of Giza?",opts:["Mesopotamians","Romans","Greeks","Ancient Egyptians"],ans:3,explain:"The pyramids of Giza were built by Ancient Egyptians, primarily as tombs for pharaohs, around 2500 BC."},
+  {q:"What was the name of the first US Space Shuttle?",opts:["Challenger","Discovery","Columbia","Atlantis"],ans:2,explain:"Columbia was NASA's first operational Space Shuttle, launching on April 12, 1981."},
+  {q:"In which country did the French Revolution begin?",opts:["England","Germany","Italy","France"],ans:3,explain:"The French Revolution began in France in 1789, overthrowing the monarchy and reshaping European politics."},
+  {q:"Who was the first woman to win a Nobel Prize?",opts:["Florence Nightingale","Rosalind Franklin","Marie Curie","Ada Lovelace"],ans:2,explain:"Marie Curie won the Nobel Prize in Physics in 1903 (and Chemistry in 1911), the first woman to win a Nobel."},
+  {q:"What year did the First World War begin?",opts:["1912","1914","1916","1918"],ans:1,explain:"World War I began in 1914 after the assassination of Archduke Franz Ferdinand of Austria."},
+  {q:"Which ancient wonder was a giant statue on the island of Rhodes?",opts:["Colossus of Rhodes","Statue of Zeus","Temple of Artemis","Mausoleum at Halicarnassus"],ans:0,explain:"The Colossus of Rhodes was a giant bronze statue of the sun god Helios, built around 280 BC."},
+  {q:"Who was the longest-reigning British monarch in history?",opts:["Queen Victoria","King George III","King Henry VIII","Queen Elizabeth II"],ans:3,explain:"Queen Elizabeth II reigned for 70 years (1952–2022), surpassing Queen Victoria's 63-year reign."},
+  {q:"What was the name of the ship Charles Darwin sailed on during his famous voyage?",opts:["HMS Victory","SS Beagle","HMS Endeavour","HMS Bounty"],ans:1,explain:"Darwin sailed on HMS Beagle from 1831–1836, visiting South America and the Galápagos Islands, inspiring his theory of evolution."},
+],
+geography:[
+  {q:"What is the capital of Australia?",opts:["Sydney","Melbourne","Brisbane","Canberra"],ans:3,explain:"Canberra is Australia's capital city — chosen as a compromise between Sydney and Melbourne."},
+  {q:"Which mountain is the tallest in the world?",opts:["K2","Mount Kilimanjaro","Mount Everest","Kangchenjunga"],ans:2,explain:"Mount Everest in the Himalayas stands at 8,848.86 m above sea level."},
+  {q:"What is the largest desert in the world?",opts:["Sahara","Arabian","Gobi","Antarctic"],ans:3,explain:"Antarctica is technically the largest desert (cold desert), larger than the Sahara."},
+  {q:"Which country has the longest coastline?",opts:["USA","Russia","Australia","Canada"],ans:3,explain:"Canada has the longest coastline of any country at approximately 202,080 km."},
+  {q:"What is the capital of Japan?",opts:["Osaka","Kyoto","Hiroshima","Tokyo"],ans:3,explain:"Tokyo is Japan's capital and the world's most populous metropolitan area."},
+  {q:"What is the largest country in the world by area?",opts:["China","Canada","USA","Russia"],ans:3,explain:"Russia is the largest country at about 17.1 million km², spanning 11 time zones."},
+  {q:"Which river runs through Egypt?",opts:["Amazon","Yangtze","Congo","Nile"],ans:3,explain:"The Nile River flows through Egypt from south to north, emptying into the Mediterranean Sea."},
+  {q:"What is the capital of Brazil?",opts:["Rio de Janeiro","São Paulo","Brasília","Salvador"],ans:2,explain:"Brasília is Brazil's capital, built in the 1950s specifically to serve as the national capital."},
+  {q:"Which continent is the Sahara Desert located on?",opts:["Asia","South America","Australia","Africa"],ans:3,explain:"The Sahara Desert is located in North Africa and is the largest hot desert in the world."},
+  {q:"What is the name of the sea between Europe and Africa?",opts:["Red Sea","Caribbean Sea","Mediterranean Sea","Caspian Sea"],ans:2,explain:"The Mediterranean Sea separates Europe (north) from Africa (south) and connects to the Atlantic Ocean."},
+  {q:"What is the capital of Canada?",opts:["Toronto","Vancouver","Montreal","Ottawa"],ans:3,explain:"Ottawa, located in Ontario, is Canada's capital city. Toronto is the largest city, but not the capital."},
+  {q:"Which country is the Amazon rainforest primarily located in?",opts:["Colombia","Peru","Ecuador","Brazil"],ans:3,explain:"About 60% of the Amazon rainforest is located in Brazil, with the rest spread across 8 other countries."},
+  {q:"How many time zones does Russia span?",opts:["9","10","11","12"],ans:2,explain:"Russia spans 11 time zones, making it the country with the most time zones in the world."},
+  {q:"Which is the deepest lake in the world?",opts:["Caspian Sea","Lake Superior","Lake Baikal","Lake Tanganyika"],ans:2,explain:"Lake Baikal in Siberia, Russia, is the world's deepest lake at 1,642 metres, holding 20% of Earth's surface fresh water."},
+  {q:"What is the capital city of South Korea?",opts:["Busan","Incheon","Daejeon","Seoul"],ans:3,explain:"Seoul is the capital and largest city of South Korea, home to about 10 million people."},
+  {q:"Which country contains the most natural UNESCO World Heritage Sites?",opts:["France","China","Italy","USA"],ans:1,explain:"China has the most UNESCO World Heritage Sites of any single country, with over 57 recognized sites."},
+  {q:"What ocean lies between Africa and Australia?",opts:["Atlantic Ocean","Pacific Ocean","Indian Ocean","Southern Ocean"],ans:2,explain:"The Indian Ocean lies between Africa to the west and Australia to the east."},
+  {q:"What is the name of the world's largest coral reef system?",opts:["Florida Reef","Mesoamerican Reef","Ningaloo Reef","Great Barrier Reef"],ans:3,explain:"The Great Barrier Reef off Queensland, Australia, is the world's largest coral reef system, stretching over 2,300 km."},
+  {q:"Which two countries share the longest land border in the world?",opts:["USA & Mexico","China & Russia","Canada & USA","Argentina & Chile"],ans:2,explain:"The US–Canada border stretches 8,891 km, the world's longest international land border."},
+  {q:"On which continent is the country of Egypt located?",opts:["Asia","Middle East","Africa","Europe"],ans:2,explain:"Egypt is located in northeastern Africa, although the Sinai Peninsula is technically in Asia."},
+  {q:"What is the currency of the European Union?",opts:["Franc","Pound","Dollar","Euro"],ans:3,explain:"The Euro (€) is the official currency of 20 of the 27 EU member states, known as the Eurozone."},
+  {q:"Which is the smallest continent by land area?",opts:["Europe","Antarctica","Australia","South America"],ans:2,explain:"Australia (also called Oceania) is the smallest continent at about 7.7 million km²."},
+  {q:"What is the capital of Argentina?",opts:["Santiago","Lima","Bogotá","Buenos Aires"],ans:3,explain:"Buenos Aires is Argentina's capital and largest city, located on the Río de la Plata."},
+  {q:"Through how many countries does the Amazon River flow?",opts:["2","3","4","5"],ans:1,explain:"The Amazon flows primarily through Brazil and Peru, with a small section in Colombia — 3 countries total."},
+  {q:"What is the tallest mountain in Africa?",opts:["Mount Kenya","Mount Kilimanjaro","Atlas Peak","Rwenzori"],ans:1,explain:"Mount Kilimanjaro in Tanzania stands at 5,895 m, the highest peak in Africa."},
+  {q:"Which city is known as 'The City of Light'?",opts:["Rome","London","Amsterdam","Paris"],ans:3,explain:"Paris earned the nickname 'City of Light' (La Ville Lumière) for being an early adopter of gas street lighting."},
+]
+};
+
+let triviaSubject='general',triviaQ=null,triviaAnswered=false,triviaCorrect=0,triviaTotal=0;
+const triviaSubjectColors={general:'rgba(201,151,74,.2)',tech:'rgba(74,122,191,.2)',games:'rgba(155,89,182,.2)',science:'rgba(39,174,96,.2)',math:'rgba(231,76,60,.2)',english:'rgba(52,152,219,.2)',history:'rgba(230,126,34,.2)',geography:'rgba(26,188,156,.2)'};
+const triviaSubjectText={general:'var(--gold)',tech:'#7ab0ff',games:'#c07aff',science:'#7aff9a',math:'#ff7a7a',english:'#7ab0ff',history:'#ffb07a',geography:'#7afff0'};
+
+document.querySelectorAll('.subject-btn').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.subject-btn').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');triviaSubject=b.dataset.subject;loadTrivia();
+  });
+});
+
+function loadTrivia(){
+  const pool=TRIVIA_DB[triviaSubject]||TRIVIA_DB.general;
+  triviaQ=pool[Math.floor(Math.random()*pool.length)];
+  triviaAnswered=false;
+  document.getElementById('triviaResult').classList.remove('show');
+  const tag=document.getElementById('triviaTag');
+  tag.textContent=triviaSubject.charAt(0).toUpperCase()+triviaSubject.slice(1);
+  tag.style.background=triviaSubjectColors[triviaSubject];
+  tag.style.color=triviaSubjectText[triviaSubject];
+  document.getElementById('triviaQ').textContent=triviaQ.q;
+  const opts=document.getElementById('triviaOpts');opts.innerHTML='';
+  triviaQ.opts.forEach((o,i)=>{
+    const b=document.createElement('button');b.className='trivia-opt';
+    b.innerHTML=`<span class="opt-letter">${String.fromCharCode(65+i)}.</span> ${o}`;
+    b.addEventListener('click',()=>answerTrivia(i,b));
+    opts.appendChild(b);
+  });
+}
+
+function answerTrivia(idx,btn){
+  if(triviaAnswered)return;triviaAnswered=true;triviaTotal++;
+  const allBtns=document.querySelectorAll('.trivia-opt');
+  if(idx===triviaQ.ans){triviaCorrect++;btn.classList.add('correct');}
+  else{btn.classList.add('wrong');allBtns[triviaQ.ans].classList.add('correct');}
+  document.getElementById('triviaScore').textContent=`${triviaCorrect} / ${triviaTotal}`;
+  document.getElementById('triviaExplain').textContent=triviaQ.explain;
+  document.getElementById('triviaResult').classList.add('show');
+}
+
+document.getElementById('triviaSaveBtn').addEventListener('click',()=>{
+  if(!triviaQ)return;
+  const content=`📚 Trivia — ${triviaSubject.charAt(0).toUpperCase()+triviaSubject.slice(1)}\n\nQ: ${triviaQ.q}\nA: ${triviaQ.opts[triviaQ.ans]}\n\n💡 ${triviaQ.explain}`;
+  const notes=JSON.parse(localStorage.getItem('notes')||'[]');
+  notes.unshift({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),title:'Trivia: '+triviaQ.q.slice(0,40)+'…',content,category:['Ideas'],color:'',createdAt:Date.now(),updatedAt:Date.now(),pinned:false});
+  localStorage.setItem('notes',JSON.stringify(notes));
+  showToast('✓ Saved to Notes!');
+});
+
+document.getElementById('nextTriviaBtn').addEventListener('click',loadTrivia);
+document.getElementById('resetTriviaBtn').addEventListener('click',()=>{triviaCorrect=0;triviaTotal=0;document.getElementById('triviaScore').textContent='0 / 0';loadTrivia();});
+loadTrivia();
+
+/* ================================================================
+   MIND BENDER
+   ================================================================ */
+document.querySelectorAll('.puzzle-tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.puzzle-tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('puzzleLights').style.display='none';
+    document.getElementById('puzzleMath').style.display='none';
+    document.getElementById('puzzlePattern').style.display='none';
+    const map={lights:'puzzleLights',math:'puzzleMath',pattern:'puzzlePattern'};
+    document.getElementById(map[t.dataset.puzzle]).style.display='block';
+    if(t.dataset.puzzle==='math')newMath();
+    if(t.dataset.puzzle==='pattern')newPattern();
+  });
+});
+
+/* Lights Out */
+let lightsGrid=[],lightsMoves=0;
+function newLights(){
+  lightsMoves=0;document.getElementById('lightsMoves').textContent='0';
+  document.getElementById('lightsMsg').textContent='';
+  lightsGrid=Array.from({length:25},()=>Math.random()>.5?1:0);
+  // ensure not already solved
+  while(lightsGrid.every(v=>v===0))lightsGrid=Array.from({length:25},()=>Math.random()>.5?1:0);
+  renderLights();
+}
+function toggleLights(idx){
+  [idx,idx-5,idx+5,idx%5>0?idx-1:-1,idx%5<4?idx+1:-1].forEach(i=>{if(i>=0&&i<25)lightsGrid[i]^=1;});
+  lightsMoves++;document.getElementById('lightsMoves').textContent=lightsMoves;
+  renderLights();
+  if(lightsGrid.every(v=>v===0))document.getElementById('lightsMsg').textContent=`🎉 Solved in ${lightsMoves} moves!`;
+}
+function renderLights(){
+  const g=document.getElementById('lightsGrid');g.innerHTML='';
+  lightsGrid.forEach((on,i)=>{
+    const c=document.createElement('div');c.className='light-cell '+(on?'light-on':'light-off');
+    c.addEventListener('click',()=>toggleLights(i));g.appendChild(c);
+  });
+}
+document.getElementById('newLightsBtn').addEventListener('click',newLights);
+newLights();
+
+/* Math Flash */
+let mathStreak=0,mathBestS=parseInt(localStorage.getItem('mathBest')||'0'),mathAnswer=0;
+document.getElementById('mathBest').textContent=mathBestS;
+function newMath(){
+  const ops=['+','-','×','÷'];const op=ops[Math.floor(Math.random()*ops.length)];
+  let a,b;
+  if(op==='+'){a=Math.floor(Math.random()*50)+1;b=Math.floor(Math.random()*50)+1;mathAnswer=a+b;}
+  else if(op==='-'){a=Math.floor(Math.random()*50)+10;b=Math.floor(Math.random()*a)+1;mathAnswer=a-b;}
+  else if(op==='×'){a=Math.floor(Math.random()*12)+2;b=Math.floor(Math.random()*12)+2;mathAnswer=a*b;}
+  else{b=Math.floor(Math.random()*10)+2;mathAnswer=Math.floor(Math.random()*10)+2;a=mathAnswer*b;}
+  document.getElementById('mathQ').textContent=`${a} ${op} ${b} = ?`;
+  document.getElementById('mathInput').value='';document.getElementById('mathMsg').textContent='';
+  document.getElementById('mathInput').focus();
+}
+document.getElementById('mathSubmit').addEventListener('click',()=>{
+  const val=parseInt(document.getElementById('mathInput').value);
+  if(isNaN(val))return;
+  if(val===mathAnswer){
+    mathStreak++;document.getElementById('mathStreak').textContent=mathStreak;
+    if(mathStreak>mathBestS){mathBestS=mathStreak;localStorage.setItem('mathBest',mathBestS);document.getElementById('mathBest').textContent=mathBestS;}
+    document.getElementById('mathMsg').textContent='✓ Correct!';
+    setTimeout(newMath,700);
+  } else {
+    mathStreak=0;document.getElementById('mathStreak').textContent='0';
+    document.getElementById('mathMsg').textContent=`✗ Answer was ${mathAnswer}`;
+    setTimeout(newMath,1200);
+  }
+});
+document.getElementById('mathInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('mathSubmit').click();});
+newMath();
+
+/* Pattern Finder */
+let patternAnswer=0;
+function newPattern(){
+  document.getElementById('patternMsg').textContent='';
+  document.querySelectorAll('.pattern-opt').forEach(b=>{b.classList.remove('correct','wrong');});
+  // Generate a pattern
+  const types=['arithmetic','geometric','fibonacci','square'];
+  const type=types[Math.floor(Math.random()*types.length)];
+  let seq=[],answerIdx,start,step;
+  if(type==='arithmetic'){start=Math.floor(Math.random()*10)+1;step=Math.floor(Math.random()*8)+2;seq=[start,start+step,start+2*step,start+3*step,start+4*step];patternAnswer=start+5*step;}
+  else if(type==='geometric'){start=Math.floor(Math.random()*3)+2;step=Math.floor(Math.random()*3)+2;seq=[start,start*step,start*step**2,start*step**3,start*step**4];patternAnswer=start*step**5;}
+  else if(type==='fibonacci'){start=Math.floor(Math.random()*5)+1;const b2=Math.floor(Math.random()*5)+1;seq=[start,b2,start+b2,b2+(start+b2),(start+b2)+(b2+start+b2)];patternAnswer=seq[4]+seq[3];}
+  else{const n=Math.floor(Math.random()*4)+2;seq=Array.from({length:5},(_, i)=>(n+i)**2);patternAnswer=(n+5)**2;}
+  // Render sequence
+  const seqEl=document.getElementById('patternSeq');seqEl.innerHTML='';
+  seq.forEach(n=>{const d=document.createElement('div');d.className='pattern-num';d.textContent=n;seqEl.appendChild(d);});
+  const qd=document.createElement('div');qd.className='pattern-num question';qd.textContent='?';seqEl.appendChild(qd);
+  // Wrong answers
+  const wrongs=new Set();
+  while(wrongs.size<3){const w=patternAnswer+Math.floor(Math.random()*10)-5;if(w!==patternAnswer&&w>0)wrongs.add(w);}
+  const allOpts=[patternAnswer,...wrongs].sort(()=>Math.random()-.5);
+  const optsEl=document.getElementById('patternOpts');optsEl.innerHTML='';
+  allOpts.forEach(o=>{
+    const b=document.createElement('button');b.className='pattern-opt';b.textContent=o;
+    b.addEventListener('click',()=>{
+      if(o===patternAnswer){b.classList.add('correct');document.getElementById('patternMsg').textContent='✓ Correct!';}
+      else{b.classList.add('wrong');document.getElementById('patternMsg').textContent=`✗ Answer was ${patternAnswer}`;
+        optsEl.querySelectorAll('.pattern-opt').forEach(x=>{if(parseInt(x.textContent)===patternAnswer)x.classList.add('correct');});}
+    });
+    optsEl.appendChild(b);
+  });
+}
+document.getElementById('newPatternBtn').addEventListener('click',newPattern);
+newPattern();
+
+/* ================================================================
+   TOAST
+   ================================================================ */
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>

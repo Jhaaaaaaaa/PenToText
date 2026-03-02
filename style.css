@@ -49,17 +49,84 @@
 
 [data-theme="dark"] {
   --bg:            #0e0d0b;
-  --bg2:           #141210;
-  --panel:         #1a1712;
-  --panel2:        #201d18;
+  --bg2:           #161410;
+  --panel:         #1c1a15;
+  --panel2:        #242018;
   --ink:           #f0ebe0;
-  --ink2:          #c8bfaf;
-  --muted:         #8a7f70;
-  --border:        rgba(240,235,224,0.08);
-  --border-strong: rgba(240,235,224,0.15);
-  --shadow-card:   0 2px 12px rgba(0,0,0,0.30), 0 1px 3px rgba(0,0,0,0.20);
-  --shadow-md:     0 6px 24px rgba(0,0,0,0.30);
-  --shadow-lg:     0 16px 48px rgba(0,0,0,0.40);
+  --ink2:          #d4cabc;
+  --muted:         #9a8f7e;
+  --border:        rgba(240,235,224,0.09);
+  --border-strong: rgba(240,235,224,0.18);
+  --shadow-card:   0 2px 12px rgba(0,0,0,0.40), 0 1px 3px rgba(0,0,0,0.30);
+  --shadow-md:     0 6px 24px rgba(0,0,0,0.35);
+  --shadow-lg:     0 16px 48px rgba(0,0,0,0.50);
+}
+
+/* Dark mode: note cards with color backgrounds need darker overlay + white text */
+[data-theme="dark"] .note-card {
+  filter: brightness(0.82) saturate(0.9);
+}
+
+[data-theme="dark"] .note-card h3,
+[data-theme="dark"] .note-card .note-preview {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .note-card .note-meta {
+  color: rgba(255,255,255,0.65);
+}
+
+/* White/near-white cards in dark mode should invert to dark */
+[data-theme="dark"] .note-card[style*="background: #fff"],
+[data-theme="dark"] .note-card[style*="background: #ffffff"],
+[data-theme="dark"] .note-card[style*="background: white"],
+[data-theme="dark"] .note-card[style*="background: rgb(255, 255, 255)"] {
+  filter: none;
+  background: var(--panel2) !important;
+}
+
+[data-theme="dark"] .note-card[style*="background: #fff"] h3,
+[data-theme="dark"] .note-card[style*="background: #ffffff"] h3,
+[data-theme="dark"] .note-card[style*="background: white"] h3 {
+  color: var(--ink);
+  text-shadow: none;
+}
+
+[data-theme="dark"] .note-card[style*="background: #fff"] .note-preview,
+[data-theme="dark"] .note-card[style*="background: #ffffff"] .note-preview,
+[data-theme="dark"] .note-card[style*="background: white"] .note-preview {
+  color: var(--ink2);
+  text-shadow: none;
+}
+
+/* Dark mode: inputs, selects */
+[data-theme="dark"] select,
+[data-theme="dark"] input[type="text"],
+[data-theme="dark"] input[type="number"],
+[data-theme="dark"] textarea {
+  color-scheme: dark;
+}
+
+/* Dark mode: modal backdrop stronger */
+[data-theme="dark"] .modal {
+  background: rgba(0,0,0,0.7);
+}
+
+/* Dark mode: sidebar active category */
+[data-theme="dark"] #categoryList li.active {
+  background: linear-gradient(135deg, rgba(201,151,74,0.20), rgba(201,151,74,0.08));
+}
+
+/* Dark mode: header */
+[data-theme="dark"] header {
+  background: rgba(28,26,21,0.95);
+}
+
+/* Dark mode: note tag text always white */
+[data-theme="dark"] .note-tag {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
 /* -------------------------------------------------------------
@@ -785,6 +852,13 @@ aside::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius
   transform: translateY(0);
 }
 
+/* Always show controls for archived/deleted cards */
+.note-card.ctx-archived .card-controls,
+.note-card.ctx-deleted .card-controls {
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
 .card-controls button {
   padding: 5px 11px;
   border: none;
@@ -805,8 +879,27 @@ aside::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius
 .restore-btn          { background: var(--success); }
 .permanent-delete-btn { background: var(--danger); }
 
-/* Empty state */
-.empty-state {
+/* Dark mode — ensure note card text is always readable over adapted backgrounds */
+[data-theme="dark"] .note-card h3 {
+  color: rgba(240,235,224,0.95);
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+[data-theme="dark"] .note-preview {
+  color: rgba(200,191,175,0.9);
+}
+
+[data-theme="dark"] .note-meta {
+  color: rgba(138,127,112,0.9);
+}
+
+[data-theme="dark"] .note-card {
+  border-color: rgba(240,235,224,0.10);
+}
+
+[data-theme="dark"] .note-card:hover {
+  border-color: rgba(201,151,74,0.35);
+}
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
