@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Pen To Text — Flashcards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#faf7f2;--bg2:#f3ede2;--panel:#fff;--panel2:#f8f4ec;
+  --ink:#1a1208;--ink2:#3d3224;--muted:#7a6f60;
+  --border:rgba(26,18,8,0.10);--border2:rgba(26,18,8,0.18);
+  --gold:#c9974a;--gold2:#e8c07a;--rust:#b85c38;--sage:#4a7a5a;--sky:#4a7abf;--violet:#7a5abf;
+  --danger:#c0392b;--success:#27ae60;
+  --shadow-sm:0 2px 10px rgba(26,18,8,0.08);
+  --shadow-md:0 6px 24px rgba(26,18,8,0.12);
+  --shadow-lg:0 16px 48px rgba(26,18,8,0.16);
+  --shadow-card:0 4px 20px rgba(26,18,8,0.10),0 1px 4px rgba(26,18,8,0.06);
+  --r-sm:6px;--r-md:12px;--r-lg:18px;--r-xl:24px;--r-full:9999px;
+  --ease:cubic-bezier(0.4,0,0.2,1);--spring:cubic-bezier(0.34,1.56,0.64,1);
+  --header-h:62px;
+  --font-d:'Playfair Display',serif;--font-b:'DM Sans',sans-serif;--font-m:'DM Mono',monospace;
+}
+[data-theme="dark"]{
+  --bg:#0e0d0b;--bg2:#161410;--panel:#1c1a15;--panel2:#242018;
+  --ink:#f0ebe0;--ink2:#d4cabc;--muted:#9a8f7e;
+  --border:rgba(240,235,224,0.09);--border2:rgba(240,235,224,0.18);
+  --shadow-card:0 4px 20px rgba(0,0,0,0.40),0 1px 4px rgba(0,0,0,0.30);
+  --shadow-md:0 6px 24px rgba(0,0,0,0.35);--shadow-lg:0 16px 48px rgba(0,0,0,0.50);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font-b);background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden;transition:background .3s,color .3s;}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:.025;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:90;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:var(--header-h);background:rgba(250,247,242,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);transition:background .3s;}
+[data-theme="dark"] nav{background:rgba(28,26,21,0.92);}
+.nav-brand{font-family:var(--font-d);font-size:20px;font-weight:700;color:var(--ink);text-decoration:none;letter-spacing:-.02em;}
+.nav-brand span{color:var(--gold);}
+.nav-right{display:flex;align-items:center;gap:8px;}
+.nav-link{height:36px;padding:0 14px;border-radius:var(--r-full);border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--font-b);font-size:13px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;transition:all .2s;}
+.nav-link:hover{background:var(--bg2);color:var(--ink);}
+#themeBtn{width:36px;padding:0;justify-content:center;font-size:16px;}
+
+/* HERO */
+.page-hero{padding:48px 28px 32px;text-align:center;position:relative;overflow:hidden;}
+.page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(201,151,74,.10),transparent 70%);pointer-events:none;}
+.page-eyebrow{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);padding:5px 14px;border:1px solid rgba(201,151,74,.3);border-radius:var(--r-full);margin-bottom:14px;}
+.page-title{font-family:var(--font-d);font-size:clamp(36px,6vw,60px);font-weight:900;letter-spacing:-.03em;margin-bottom:12px;}
+.page-title em{font-style:italic;color:var(--gold);}
+.page-sub{font-size:15px;color:var(--muted);max-width:500px;margin:0 auto;line-height:1.7;}
+
+/* MAIN */
+.main-wrap{max-width:1100px;margin:0 auto;padding:0 22px 80px;}
+
+/* MODE SWITCHER */
+.mode-switcher{display:flex;gap:10px;justify-content:center;margin:28px 0 32px;flex-wrap:wrap;}
+.mode-btn{position:relative;display:flex;align-items:center;gap:10px;padding:14px 24px;border-radius:var(--r-lg);border:2px solid var(--border2);background:var(--panel);color:var(--muted);font-family:var(--font-b);font-size:14px;font-weight:500;cursor:pointer;transition:all .25s var(--ease);min-width:200px;}
+.mode-btn:hover{border-color:var(--gold);color:var(--ink);transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.mode-btn.active{border-color:var(--gold);background:var(--gold);color:#000;box-shadow:0 4px 20px rgba(201,151,74,.35);}
+.mode-icon{font-size:26px;flex-shrink:0;}
+.mode-text{text-align:left;}
+.mode-text strong{display:block;font-size:15px;font-weight:600;}
+.mode-text span{font-size:12px;opacity:.72;}
+
+/* SECTION PANELS */
+.section-panel{display:none;animation:fadeUp .35s var(--ease);}
+.section-panel.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+/* AI PANEL */
+.ai-panel{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;}
+@media(max-width:800px){.ai-panel{grid-template-columns:1fr;}}
+.panel-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-xl);padding:24px;box-shadow:var(--shadow-sm);}
+.panel-card h3{font-family:var(--font-d);font-size:20px;font-weight:700;margin-bottom:6px;}
+.panel-card .card-sub{font-size:13px;color:var(--muted);margin-bottom:18px;}
+
+/* NOTE PICKER */
+.note-list-wrap{max-height:320px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;scrollbar-width:thin;}
+.note-list-wrap::-webkit-scrollbar{width:4px;}
+.note-list-wrap::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+.note-pick-item{display:flex;align-items:flex-start;gap:10px;padding:11px 13px;border-radius:var(--r-md);border:1.5px solid var(--border);cursor:pointer;transition:all .18s;background:var(--bg);}
+.note-pick-item:hover{border-color:var(--gold);background:var(--bg2);}
+.note-pick-item.selected{border-color:var(--gold);background:rgba(201,151,74,.08);}
+.note-pick-cb{width:18px;height:18px;border:2px solid var(--border2);border-radius:4px;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .15s;}
+.note-pick-item.selected .note-pick-cb{background:var(--gold);border-color:var(--gold);color:#000;}
+.note-pick-info strong{font-size:13.5px;font-weight:600;display:block;margin-bottom:2px;}
+.note-pick-info span{font-size:12px;color:var(--muted);}
+.note-pick-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px;}
+.note-pick-tag{padding:2px 7px;border-radius:var(--r-full);font-size:10px;font-weight:600;color:#fff;}
+.select-all-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.select-all-row span{font-size:12px;color:var(--muted);}
+
+/* AI OPTIONS */
+.ai-options{display:flex;flex-direction:column;gap:14px;margin-bottom:18px;}
+.ai-opt-row{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.ai-opt-row label{font-size:13px;color:var(--ink2);font-weight:500;}
+select.styled{height:36px;padding:0 28px 0 10px;border-radius:var(--r-md);border:1.5px solid var(--border2);background:var(--bg2);color:var(--ink);font-family:var(--font-b);font-size:13px;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%237a6f60' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;cursor:pointer;transition:border-color .2s;}
+select.styled:focus{border-color:var(--gold);}
+input[type="range"]{accent-color:var(--gold);flex:1;max-width:160px;}
+.range-val{font-family:var(--font-m);font-size:13px;color:var(--gold);min-width:24px;text-align:right;}
+
+/* GENERATE BTN */
+.btn-generate{width:100%;padding:14px;border-radius:var(--r-full);border:none;background:var(--ink);color:var(--bg);font-family:var(--font-b);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all .2s var(--spring);box-shadow:var(--shadow-sm);}
+.btn-generate:hover{background:var(--gold);color:var(--ink);transform:translateY(-2px);box-shadow:var(--shadow-md);}
+.btn-generate:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+.spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty-notes{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;line-height:1.7;}
+.empty-notes a{color:var(--gold);text-decoration:none;}
+
+/* GENERATED RESULTS */
+.gen-results{margin-top:24px;display:none;}
+.gen-results.show{display:block;}
+.gen-results-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;}
+.gen-results-header h4{font-family:var(--font-d);font-size:20px;font-weight:700;}
+.gen-card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:16px;}
+.gen-card-item{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);padding:16px;position:relative;animation:fadeUp .3s var(--ease);}
+.gen-card-item .gen-q{font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:8px;padding-right:28px;}
+.gen-card-item .gen-a{font-size:12.5px;color:var(--muted);line-height:1.5;padding:8px 10px;background:var(--bg2);border-radius:var(--r-sm);border-left:3px solid var(--gold);}
+.gen-card-remove{position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;border:none;background:transparent;color:var(--muted);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.gen-card-remove:hover{background:rgba(192,57,43,.12);color:var(--danger);}
+.deck-name-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.deck-name-row input{flex:1;max-width:280px;height:38px;padding:0 13px;border-radius:var(--r-md);border:1.5px solid var(--border2);background:var(--bg2);color:var(--ink);font-family:var(--font-b);font-size:14px;outline:none;transition:border-color .2s;}
+.deck-name-row input:focus{border-color:var(--gold);}
+
+/* MANUAL */
+.manual-layout{display:grid;grid-template-columns:1fr 1.3fr;gap:24px;align-items:start;}
+@media(max-width:860px){.manual-layout{grid-template-columns:1fr;}}
+.form-field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+.form-field label{font-size:11px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;color:var(--muted);}
+.form-field textarea,.form-field input[type="text"]{width:100%;padding:10px 13px;border-radius:var(--r-md);border:1.5px solid var(--border2);background:var(--bg2);color:var(--ink);font-family:var(--font-b);font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s;}
+.form-field textarea:focus,.form-field input[type="text"]:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,151,74,.12);}
+.form-field textarea{resize:vertical;min-height:90px;line-height:1.6;}
+.deck-pick{display:flex;gap:8px;flex-wrap:wrap;}
+.deck-chip{padding:5px 12px;border-radius:var(--r-full);border:1.5px solid var(--border2);background:var(--bg2);color:var(--muted);font-size:13px;cursor:pointer;transition:all .15s;}
+.deck-chip:hover{border-color:var(--gold);color:var(--ink);}
+.deck-chip.active{background:var(--ink);border-color:var(--ink);color:var(--bg);}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;}
+.btn-primary{padding:0 22px;height:40px;background:var(--ink);color:var(--bg);border:none;border-radius:var(--r-full);font-family:var(--font-b);font-size:14px;font-weight:500;cursor:pointer;transition:all .2s var(--spring);}
+.btn-primary:hover{background:var(--gold);color:var(--ink);transform:translateY(-1px);}
+.btn-ghost{padding:0 18px;height:40px;background:transparent;color:var(--muted);border:1.5px solid var(--border2);border-radius:var(--r-full);font-family:var(--font-b);font-size:14px;cursor:pointer;transition:all .15s;}
+.btn-ghost:hover{background:var(--bg2);color:var(--ink);}
+.btn-danger-sm{padding:0 12px;height:32px;background:var(--danger);color:#fff;border:none;border-radius:var(--r-full);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
+.btn-danger-sm:hover{opacity:.85;}
+.mini-card-list{display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;scrollbar-width:thin;padding-right:2px;}
+.mini-card-list::-webkit-scrollbar{width:4px;}
+.mini-card-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px;}
+.mini-card{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);animation:fadeUp .2s var(--ease);}
+.mini-card .mini-q{flex:1;font-size:13px;font-weight:500;color:var(--ink2);}
+.mini-card .mini-q span{display:block;font-size:11px;color:var(--muted);font-weight:400;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;}
+.mini-card-num{font-family:var(--font-m);font-size:11px;color:var(--muted);background:var(--panel2);padding:2px 7px;border-radius:var(--r-full);flex-shrink:0;}
+.preview-empty{text-align:center;padding:30px;color:var(--muted);font-size:13px;border:2px dashed var(--border2);border-radius:var(--r-lg);}
+
+/* LIBRARY */
+.library-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:22px;}
+.library-header h3{font-family:var(--font-d);font-size:24px;font-weight:700;}
+.deck-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-bottom:40px;}
+.deck-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;cursor:pointer;transition:all .22s var(--spring);position:relative;overflow:hidden;}
+.deck-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md);border-color:rgba(201,151,74,.3);}
+.deck-card-icon{font-size:32px;margin-bottom:10px;}
+.deck-card h4{font-family:var(--font-d);font-size:17px;font-weight:700;margin-bottom:4px;}
+.deck-card-meta{font-size:12px;color:var(--muted);margin-bottom:12px;}
+.deck-card-stats{display:flex;gap:6px;flex-wrap:wrap;}
+.stat-pill{padding:3px 9px;border-radius:var(--r-full);font-size:11px;font-weight:600;}
+.stat-new{background:rgba(74,122,191,.15);color:var(--sky);}
+.stat-due{background:rgba(201,151,74,.15);color:var(--gold);}
+.stat-done{background:rgba(74,122,90,.15);color:var(--sage);}
+.deck-actions{position:absolute;top:10px;right:10px;display:flex;gap:4px;opacity:0;transition:opacity .15s;}
+.deck-card:hover .deck-actions{opacity:1;}
+.deck-action-btn{width:28px;height:28px;border-radius:var(--r-sm);border:none;background:var(--bg2);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.deck-action-btn:hover{background:var(--border2);}
+.deck-empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted);}
+.deck-empty p{font-size:15px;margin-top:10px;}
+
+/* STUDY OVERLAY */
+.study-overlay{display:none;position:fixed;inset:0;background:var(--bg);z-index:200;flex-direction:column;align-items:center;overflow-y:auto;}
+.study-overlay.active{display:flex;}
+.study-nav{width:100%;display:flex;align-items:center;justify-content:space-between;padding:16px 28px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10;}
+.study-nav-title{font-family:var(--font-d);font-size:17px;font-weight:700;}
+.study-progress-wrap{flex:1;margin:0 24px;max-width:360px;}
+.study-progress-bar{height:6px;background:var(--border2);border-radius:var(--r-full);overflow:hidden;}
+.study-progress-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--rust));border-radius:var(--r-full);transition:width .4s var(--ease);}
+.study-progress-label{font-size:12px;color:var(--muted);text-align:center;margin-top:5px;}
+.study-body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;width:100%;max-width:640px;margin:0 auto;}
+.study-counter{font-family:var(--font-m);font-size:13px;color:var(--muted);margin-bottom:20px;}
+
+/* FLASHCARD */
+.flashcard-scene{width:100%;max-width:520px;height:290px;perspective:1200px;cursor:pointer;margin:0 auto 28px;}
+.flashcard-inner{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform .6s cubic-bezier(0.4,0.2,0.2,1);}
+.flashcard-inner.flipped{transform:rotateY(180deg);}
+.flashcard-face{position:absolute;inset:0;border-radius:var(--r-xl);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;backface-visibility:hidden;-webkit-backface-visibility:hidden;box-shadow:var(--shadow-lg);}
+.flashcard-front{background:var(--panel);border:1px solid var(--border);}
+.flashcard-back{background:var(--ink);transform:rotateY(180deg);}
+.card-label{font-size:10px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;margin-bottom:14px;opacity:.5;}
+.flashcard-front .card-label{color:var(--gold);}
+.flashcard-back .card-label{color:var(--gold2);}
+.card-text{font-family:var(--font-d);font-size:clamp(16px,3vw,22px);font-weight:700;text-align:center;line-height:1.4;}
+.flashcard-front .card-text{color:var(--ink);}
+.flashcard-back .card-text{color:var(--bg);}
+.card-hint{font-size:12px;color:var(--muted);margin-top:14px;display:flex;align-items:center;gap:5px;}
+.flashcard-back .card-hint{color:rgba(250,247,242,.35);}
+.card-deck-tag{position:absolute;top:14px;padding:3px 10px;border-radius:var(--r-full);font-size:10px;font-weight:600;letter-spacing:.05em;white-space:nowrap;}
+.flashcard-front .card-deck-tag{background:rgba(201,151,74,.12);color:var(--gold);}
+.flashcard-back .card-deck-tag{background:rgba(201,151,74,.2);color:var(--gold2);}
+
+/* RATING */
+.rating-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;width:100%;max-width:520px;}
+.rating-btn{flex:1;min-width:90px;max-width:150px;padding:12px 6px;border-radius:var(--r-lg);border:2px solid transparent;font-family:var(--font-b);font-size:13px;font-weight:600;cursor:pointer;transition:all .18s var(--spring);display:flex;flex-direction:column;align-items:center;gap:4px;}
+.rating-btn span{font-size:11px;font-weight:400;opacity:.75;}
+.rating-btn:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);}
+.rating-again{background:rgba(192,57,43,.12);color:var(--danger);border-color:rgba(192,57,43,.3);}
+.rating-again:hover{background:var(--danger);color:#fff;}
+.rating-hard{background:rgba(201,151,74,.12);color:var(--gold);border-color:rgba(201,151,74,.3);}
+.rating-hard:hover{background:var(--gold);color:var(--ink);}
+.rating-good{background:rgba(74,122,191,.12);color:var(--sky);border-color:rgba(74,122,191,.3);}
+.rating-good:hover{background:var(--sky);color:#fff;}
+.rating-easy{background:rgba(74,122,90,.12);color:var(--sage);border-color:rgba(74,122,90,.3);}
+.rating-easy:hover{background:var(--sage);color:#fff;}
+.rating-row.hidden{opacity:0;pointer-events:none;}
+
+/* SUMMARY */
+.study-summary{display:none;flex-direction:column;align-items:center;text-align:center;padding:40px 20px;width:100%;max-width:520px;}
+.study-summary.show{display:flex;}
+.summary-icon{font-size:60px;margin-bottom:14px;}
+.summary-title{font-family:var(--font-d);font-size:34px;font-weight:900;margin-bottom:8px;}
+.summary-sub{font-size:15px;color:var(--muted);margin-bottom:24px;line-height:1.7;}
+.summary-stats{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:24px;}
+.summary-stat{padding:14px 18px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);text-align:center;min-width:80px;}
+.summary-stat .s-val{font-family:var(--font-m);font-size:26px;font-weight:500;}
+.summary-stat .s-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+.s-again{color:var(--danger);}.s-hard{color:var(--gold);}.s-good{color:var(--sky);}.s-easy{color:var(--sage);}
+
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:var(--bg);padding:12px 24px;border-radius:var(--r-full);font-size:14px;font-weight:500;z-index:10000;transition:transform .3s var(--spring),opacity .3s;opacity:0;pointer-events:none;white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+#toast.success{background:var(--success);}
+#toast.warn{background:var(--gold);color:var(--ink);}
+
+/* CONFIRM MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(10,8,5,.55);backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.open{display:flex;}
+.modal-box{background:var(--panel);border-radius:var(--r-xl);padding:28px;width:100%;max-width:400px;box-shadow:var(--shadow-lg);border:1px solid var(--border);animation:fadeUp .3s var(--spring);position:relative;}
+.modal-box h3{font-family:var(--font-d);font-size:22px;font-weight:700;margin-bottom:12px;}
+.modal-close{position:absolute;top:16px;right:16px;background:var(--bg2);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:all .15s;}
+.modal-close:hover{background:rgba(192,57,43,.1);color:var(--danger);}
+
+/* RESPONSIVE */
+@media(max-width:600px){
+  nav{padding:0 14px;}
+  .page-hero{padding:32px 16px 24px;}
+  .main-wrap{padding:0 14px 60px;}
+  .mode-btn{min-width:auto;flex:1;}
+  .flashcard-scene{height:230px;}
+  .rating-btn{min-width:70px;padding:10px 5px;font-size:12px;}
+  .study-nav{padding:12px 14px;}
+  .study-progress-wrap{margin:0 12px;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="nav-brand">Pen <span>&</span> Text</a>
+  <div class="nav-right">
+    <a href="note.html" class="nav-link">📝 Notes</a>
+    <a href="games.html" class="nav-link">🎮 Games</a>
+    <a href="index.html" class="nav-link">← Home</a>
+    <button class="nav-link" id="themeBtn" title="Toggle theme">🌙</button>
+  </div>
+</nav>
+
+<div class="page-hero">
+  <div class="page-eyebrow">Study smarter</div>
+  <h1 class="page-title">Flash<em>cards</em></h1>
+  <p class="page-sub">Turn your notes into study cards with AI, or craft them by hand. Then quiz yourself with spaced repetition.</p>
+</div>
+
+<div class="main-wrap">
+
+  <div class="mode-switcher">
+    <button class="mode-btn active" data-mode="library">
+      <span class="mode-icon">📚</span>
+      <span class="mode-text"><strong>Card Library</strong><span>Browse &amp; study your decks</span></span>
+    </button>
+    <button class="mode-btn" data-mode="ai">
+      <span class="mode-icon">✨</span>
+      <span class="mode-text"><strong>AI Generator</strong><span>Auto-create from notes</span></span>
+    </button>
+    <button class="mode-btn" data-mode="manual">
+      <span class="mode-icon">✏️</span>
+      <span class="mode-text"><strong>Manual Creator</strong><span>Build your own cards</span></span>
+    </button>
+  </div>
+
+  <!-- LIBRARY -->
+  <div class="section-panel active" id="panel-library">
+    <div class="library-header">
+      <h3>Your Decks</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-ghost" id="studyAllBtn">▶ Study All Due</button>
+        <button class="btn-danger-sm" id="clearAllDecksBtn" style="height:40px;padding:0 16px;font-size:13px;">🗑 Clear All</button>
+      </div>
+    </div>
+    <div class="deck-grid" id="deckGrid"></div>
+  </div>
+
+  <!-- AI GENERATOR -->
+  <div class="section-panel" id="panel-ai">
+    <div class="ai-panel">
+      <div class="panel-card">
+        <h3>Select Notes</h3>
+        <p class="card-sub">Choose which notes to generate flashcards from.</p>
+        <div class="select-all-row">
+          <button class="btn-ghost" style="height:30px;padding:0 12px;font-size:12px;" id="selectAllBtn">Select All</button>
+          <span id="selCount">0 selected</span>
+        </div>
+        <div class="note-list-wrap" id="notePickerList">
+          <div class="empty-notes">No notes found. <a href="note.html">Create some notes first →</a></div>
+        </div>
+      </div>
+      <div>
+        <div class="panel-card" style="margin-bottom:16px;">
+          <h3>Generation Options</h3>
+          <p class="card-sub">Customize how your flashcards are created.</p>
+          <div class="ai-options">
+            <div class="ai-opt-row">
+              <label>Cards per note</label>
+              <input type="range" id="cardsPerNote" min="2" max="10" value="5"/>
+              <span class="range-val" id="cardsPerNoteVal">5</span>
+            </div>
+            <div class="ai-opt-row">
+              <label>Card style</label>
+              <select class="styled" id="cardStyle">
+                <option value="qa">Question &amp; Answer</option>
+                <option value="definition">Term &amp; Definition</option>
+                <option value="cloze">Fill-in-the-blank</option>
+                <option value="mixed">Mixed</option>
+              </select>
+            </div>
+            <div class="ai-opt-row">
+              <label>Difficulty</label>
+              <select class="styled" id="cardDifficulty">
+                <option value="easy">Easy (broad concepts)</option>
+                <option value="medium" selected>Medium (balanced)</option>
+                <option value="hard">Hard (specific details)</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-generate" id="generateBtn">
+            <span id="generateBtnText">✨ Generate Flashcards</span>
+          </button>
+        </div>
+        <div class="panel-card gen-results" id="genResults">
+          <div class="gen-results-header">
+            <h4 id="genResultsTitle">Generated Cards</h4>
+            <button class="btn-ghost" style="height:32px;padding:0 12px;font-size:12px;" id="regenBtn">↻ Regenerate</button>
+          </div>
+          <div class="gen-card-grid" id="genCardGrid"></div>
+          <div class="deck-name-row">
+            <input type="text" id="deckNameInput" placeholder="Deck name…"/>
+            <button class="btn-primary" id="saveDeckBtn">💾 Save Deck</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MANUAL CREATOR -->
+  <div class="section-panel" id="panel-manual">
+    <div class="manual-layout">
+      <div class="panel-card">
+        <h3>Create a Card</h3>
+        <p class="card-sub">Add cards one by one to build your deck.</p>
+        <div class="form-field">
+          <label>Question / Front</label>
+          <textarea id="manualQ" placeholder="What is the powerhouse of the cell?"></textarea>
+        </div>
+        <div class="form-field">
+          <label>Answer / Back</label>
+          <textarea id="manualA" placeholder="The mitochondria."></textarea>
+        </div>
+        <div class="form-field">
+          <label>Add to existing deck</label>
+          <div class="deck-pick" id="deckPickRow"><span style="font-size:12px;color:var(--muted);">No decks yet.</span></div>
+        </div>
+        <div class="form-field">
+          <label>Or save to a new deck name</label>
+          <input type="text" id="newDeckName" placeholder="New deck name…"/>
+        </div>
+        <div class="btn-row">
+          <button class="btn-primary" id="addCardBtn">+ Add Card</button>
+          <button class="btn-ghost" id="clearCardFormBtn">Clear</button>
+        </div>
+      </div>
+      <div class="panel-card">
+        <h4 style="font-family:var(--font-d);font-size:18px;font-weight:700;margin-bottom:4px;">Card Queue <span id="queueCount" style="font-family:var(--font-m);font-size:14px;color:var(--muted);">(0)</span></h4>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Cards added below. Save to a named deck when ready.</p>
+        <div id="manualCardList" class="mini-card-list">
+          <div class="preview-empty">Your queued cards will appear here.</div>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <input type="text" id="manualDeckSaveName" placeholder="Save queue as deck…" style="flex:1;min-width:140px;height:38px;padding:0 12px;border-radius:var(--r-md);border:1.5px solid var(--border2);background:var(--bg2);color:var(--ink);font-family:var(--font-b);font-size:13px;outline:none;transition:border-color .2s;"/>
+          <button class="btn-primary" id="saveQueueBtn">💾 Save Deck</button>
+          <button class="btn-ghost" id="clearQueueBtn">Clear</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- STUDY OVERLAY -->
+<div class="study-overlay" id="studyOverlay">
+  <div class="study-nav">
+    <button class="nav-link" id="exitStudyBtn">← Exit</button>
+    <div class="study-progress-wrap">
+      <div class="study-progress-bar"><div class="study-progress-fill" id="studyProgressFill" style="width:0%"></div></div>
+      <div class="study-progress-label" id="studyProgressLabel">0 / 0</div>
+    </div>
+    <span class="study-nav-title" id="studyDeckName">Study</span>
+  </div>
+  <div class="study-body">
+    <div class="study-counter" id="studyCounter"></div>
+    <div class="flashcard-scene" id="flashcardScene">
+      <div class="flashcard-inner" id="flashcardInner">
+        <div class="flashcard-face flashcard-front">
+          <span class="card-deck-tag" id="cardDeckTag">Deck</span>
+          <span class="card-label">Question</span>
+          <div class="card-text" id="cardFrontText">Loading…</div>
+          <span class="card-hint">👆 Click to reveal answer</span>
+        </div>
+        <div class="flashcard-face flashcard-back">
+          <span class="card-deck-tag" id="cardDeckTagBack">Deck</span>
+          <span class="card-label">Answer</span>
+          <div class="card-text" id="cardBackText"></div>
+          <span class="card-hint">Rate how well you knew this ↓</span>
+        </div>
+      </div>
+    </div>
+    <div class="rating-row hidden" id="ratingRow">
+      <button class="rating-btn rating-again" data-rating="0">😖 Again<span>Didn't know</span></button>
+      <button class="rating-btn rating-hard"  data-rating="1">😕 Hard<span>Tough one</span></button>
+      <button class="rating-btn rating-good"  data-rating="2">🙂 Good<span>Got it</span></button>
+      <button class="rating-btn rating-easy"  data-rating="3">😄 Easy<span>Too easy</span></button>
+    </div>
+    <div class="study-summary" id="studySummary">
+      <div class="summary-icon">🎉</div>
+      <h2 class="summary-title">Session Done!</h2>
+      <p class="summary-sub" id="summarySubText">You reviewed all cards. Keep it up!</p>
+      <div class="summary-stats">
+        <div class="summary-stat"><div class="s-val s-again" id="sumAgain">0</div><div class="s-lbl">Again</div></div>
+        <div class="summary-stat"><div class="s-val s-hard"  id="sumHard">0</div><div class="s-lbl">Hard</div></div>
+        <div class="summary-stat"><div class="s-val s-good"  id="sumGood">0</div><div class="s-lbl">Good</div></div>
+        <div class="summary-stat"><div class="s-val s-easy"  id="sumEasy">0</div><div class="s-lbl">Easy</div></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">
+        <button class="btn-primary" id="studyAgainBtn">↻ Study Again</button>
+        <button class="btn-ghost"   id="backToLibraryBtn">← Back to Library</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <button class="modal-close" id="confirmClose">×</button>
+    <h3 id="confirmTitle">Confirm</h3>
+    <p id="confirmMsg" style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.6;"></p>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn-ghost" id="confirmNo">Cancel</button>
+      <button class="btn-primary" id="confirmYes">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================ PERSISTENCE */
+const DECKS_KEY = 'pt_flashcard_decks';
+const loadDecks  = () => { try { return JSON.parse(localStorage.getItem(DECKS_KEY)) || []; } catch { return []; } };
+const saveDecks  = d  => localStorage.setItem(DECKS_KEY, JSON.stringify(d));
+const loadNotes  = () => { try { return JSON.parse(localStorage.getItem('notes')) || []; } catch { return []; } };
+const loadCats   = () => { try { return JSON.parse(localStorage.getItem('categories')) || []; } catch { return []; } };
+
+/* ============================================================ THEME */
+(()=>{ const t=localStorage.getItem('theme'); if(t==='dark') document.documentElement.setAttribute('data-theme','dark'); })();
+document.getElementById('themeBtn').addEventListener('click',()=>{
+  const d = document.documentElement.getAttribute('data-theme')==='dark';
+  d ? document.documentElement.removeAttribute('data-theme') : document.documentElement.setAttribute('data-theme','dark');
+  localStorage.setItem('theme', d ? '' : 'dark');
+});
+
+/* ============================================================ TOAST */
+let _tt;
+function toast(msg, type='') {
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show'+(type?' '+type:'');
+  clearTimeout(_tt); _tt=setTimeout(()=>el.className='',3000);
+}
+
+/* ============================================================ CONFIRM */
+function confirm2(title, msg) {
+  return new Promise(res=>{
+    const m=document.getElementById('confirmModal');
+    document.getElementById('confirmTitle').textContent=title;
+    document.getElementById('confirmMsg').textContent=msg;
+    m.classList.add('open');
+    const y=()=>{m.classList.remove('open');res(true);off()};
+    const n=()=>{m.classList.remove('open');res(false);off()};
+    function off(){
+      document.getElementById('confirmYes').removeEventListener('click',y);
+      document.getElementById('confirmNo').removeEventListener('click',n);
+      document.getElementById('confirmClose').removeEventListener('click',n);
+    }
+    document.getElementById('confirmYes').addEventListener('click',y);
+    document.getElementById('confirmNo').addEventListener('click',n);
+    document.getElementById('confirmClose').addEventListener('click',n);
+  });
+}
+
+/* ============================================================ HELPERS */
+const escH = s => s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : '';
+const genId = () => Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const isDue = c => !c.nextReview || Date.now()>=c.nextReview;
+function timeAgo(ts){
+  if(!ts)return'recently'; const m=Math.floor((Date.now()-ts)/60000);
+  if(m<2)return'just now'; if(m<60)return m+'m ago';
+  const h=Math.floor(m/60); if(h<24)return h+'h ago';
+  return Math.floor(h/24)+'d ago';
+}
+
+/* ============================================================ MODE SWITCHING */
+function switchMode(mode){
+  document.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active',b.dataset.mode===mode));
+  document.querySelectorAll('.section-panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+mode));
+  if(mode==='library') renderLibrary();
+  if(mode==='ai')      renderNotePicker();
+  if(mode==='manual')  renderManualDeckPicker();
+}
+document.querySelectorAll('.mode-btn').forEach(b=>b.addEventListener('click',()=>switchMode(b.dataset.mode)));
+
+/* ============================================================ LIBRARY */
+const EMOJIS=['📖','🧬','🌍','💻','🎯','🎨','🔬','🏆','⚡','🦋','🎸','🌙','🔢','📐','🧩'];
+const GRADS=['linear-gradient(90deg,#c9974a,#b85c38)','linear-gradient(90deg,#4a7abf,#7a5abf)','linear-gradient(90deg,#4a7a5a,#4a7abf)','linear-gradient(90deg,#b85c38,#c9974a)','linear-gradient(90deg,#7a5abf,#4a7a5a)'];
+
+function renderLibrary(){
+  const grid=document.getElementById('deckGrid');
+  const decks=loadDecks();
+  if(!decks.length){
+    grid.innerHTML='<div class="deck-empty"><span style="font-size:48px;opacity:.2;">🃏</span><p>No decks yet — generate from notes or create cards manually!</p></div>';
+    return;
+  }
+  grid.innerHTML='';
+  decks.forEach((deck,i)=>{
+    const total=deck.cards.length;
+    const due=deck.cards.filter(c=>isDue(c)).length;
+    const done=deck.cards.filter(c=>c.lastRated&&!isDue(c)).length;
+    const el=document.createElement('div');
+    el.className='deck-card';
+    el.innerHTML=`
+      <div style="background:${GRADS[i%GRADS.length]};height:4px;position:absolute;top:0;left:0;right:0;border-radius:var(--r-lg) var(--r-lg) 0 0;"></div>
+      <div class="deck-actions">
+        <button class="deck-action-btn" data-del="${i}" title="Delete">🗑</button>
+      </div>
+      <div class="deck-card-icon">${EMOJIS[i%EMOJIS.length]}</div>
+      <h4>${escH(deck.name)}</h4>
+      <div class="deck-card-meta">${total} card${total!==1?'s':''} · ${timeAgo(deck.createdAt)}</div>
+      <div class="deck-card-stats">
+        <span class="stat-pill stat-new">${total-done-due<0?0:total-done-due} new</span>
+        <span class="stat-pill stat-due">${due} due</span>
+        <span class="stat-pill stat-done">${done} done</span>
+      </div>`;
+    el.addEventListener('click',e=>{ if(e.target.closest('[data-del]'))return; startStudy([deck]); });
+    el.querySelector('[data-del]').addEventListener('click',async e=>{
+      e.stopPropagation();
+      const ok=await confirm2('Delete Deck',`Delete "${deck.name}" and all its cards?`);
+      if(ok){ const d=loadDecks(); d.splice(i,1); saveDecks(d); renderLibrary(); toast('Deck deleted','warn'); }
+    });
+    grid.appendChild(el);
+  });
+}
+
+document.getElementById('studyAllBtn').addEventListener('click',()=>{
+  const decks=loadDecks(); if(!decks.length){toast('No decks to study!','warn');return;}
+  startStudy(decks);
+});
+document.getElementById('clearAllDecksBtn').addEventListener('click',async()=>{
+  const ok=await confirm2('Clear All Decks','This permanently deletes ALL decks. Are you sure?');
+  if(ok){ saveDecks([]); renderLibrary(); toast('All decks cleared'); }
+});
+
+/* ============================================================ STUDY */
+let studyQueue=[],studyIdx=0,studyStats={again:0,hard:0,good:0,easy:0},cardFlipped=false;
+
+function startStudy(decks){
+  let queue=[];
+  const allDecks=loadDecks();
+  decks.forEach(deck=>{
+    deck.cards.forEach(c=>{
+      const di=allDecks.findIndex(d=>d.name===deck.name);
+      queue.push({...c,_deckName:deck.name,_deckIdx:di});
+    });
+  });
+  queue=queue.filter(c=>isDue(c));
+  if(!queue.length){ toast('🎉 Nothing due! All caught up!','success'); return; }
+  queue.sort(()=>Math.random()-.5);
+  studyQueue=queue; studyIdx=0;
+  studyStats={again:0,hard:0,good:0,easy:0};
+  document.getElementById('studyDeckName').textContent=decks.length===1?decks[0].name:'All Decks';
+  document.getElementById('studySummary').classList.remove('show');
+  document.getElementById('flashcardScene').style.display='';
+  document.getElementById('ratingRow').classList.add('hidden');
+  document.getElementById('studyOverlay').classList.add('active');
+  document.body.style.overflow='hidden';
+  renderStudyCard();
+}
+
+function renderStudyCard(){
+  const card=studyQueue[studyIdx]; cardFlipped=false;
+  document.getElementById('flashcardInner').classList.remove('flipped');
+  document.getElementById('cardFrontText').textContent=card.q;
+  document.getElementById('cardBackText').textContent=card.a;
+  document.getElementById('cardDeckTag').textContent=card._deckName;
+  document.getElementById('cardDeckTagBack').textContent=card._deckName;
+  document.getElementById('ratingRow').classList.add('hidden');
+  const total=studyQueue.length, pct=Math.round(studyIdx/total*100);
+  document.getElementById('studyProgressFill').style.width=pct+'%';
+  document.getElementById('studyProgressLabel').textContent=studyIdx+' / '+total;
+  document.getElementById('studyCounter').textContent='Card '+(studyIdx+1)+' of '+total;
+}
+
+document.getElementById('flashcardScene').addEventListener('click',()=>{
+  if(!studyQueue.length||studyIdx>=studyQueue.length)return;
+  cardFlipped=!cardFlipped;
+  document.getElementById('flashcardInner').classList.toggle('flipped',cardFlipped);
+  if(cardFlipped) document.getElementById('ratingRow').classList.remove('hidden');
+});
+
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('studyOverlay').classList.contains('active'))return;
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();document.getElementById('flashcardScene').click();}
+  if(cardFlipped){if(e.key==='1')rate(0);if(e.key==='2')rate(1);if(e.key==='3')rate(2);if(e.key==='4')rate(3);}
+});
+
+document.querySelectorAll('[data-rating]').forEach(b=>b.addEventListener('click',()=>rate(parseInt(b.dataset.rating))));
+
+function rate(r){
+  if(!cardFlipped)return;
+  const labels=['again','hard','good','easy']; studyStats[labels[r]]++;
+  const intervals=[1,10,1440,4320];
+  const card=studyQueue[studyIdx];
+  const decks=loadDecks(); const di=card._deckIdx>=0?card._deckIdx:decks.findIndex(d=>d.name===card._deckName);
+  if(di!==-1){
+    const ci=decks[di].cards.findIndex(c=>c.id===card.id);
+    if(ci!==-1){ decks[di].cards[ci].lastRated=Date.now(); decks[di].cards[ci].nextReview=Date.now()+intervals[r]*60000; decks[di].cards[ci].ratingHistory=[...(decks[di].cards[ci].ratingHistory||[]),r]; }
+  }
+  saveDecks(decks);
+  studyIdx++;
+  if(studyIdx>=studyQueue.length) showSummary(); else renderStudyCard();
+}
+
+function showSummary(){
+  document.getElementById('flashcardScene').style.display='none';
+  document.getElementById('ratingRow').classList.add('hidden');
+  document.getElementById('studyProgressFill').style.width='100%';
+  document.getElementById('studyProgressLabel').textContent=studyQueue.length+' / '+studyQueue.length;
+  document.getElementById('studyCounter').textContent='';
+  const s=studyStats;
+  document.getElementById('sumAgain').textContent=s.again;
+  document.getElementById('sumHard').textContent=s.hard;
+  document.getElementById('sumGood').textContent=s.good;
+  document.getElementById('sumEasy').textContent=s.easy;
+  const pct=Math.round((s.good+s.easy)/studyQueue.length*100);
+  document.getElementById('summarySubText').textContent=pct>=80?`Excellent! ${pct}% correct — you're crushing it!`:pct>=50?`Good progress! ${pct}% correct. Review the tough ones!`:`${pct}% correct this session. Keep practicing!`;
+  document.getElementById('studySummary').classList.add('show');
+}
+
+document.getElementById('studyAgainBtn').addEventListener('click',()=>{
+  studyIdx=0; studyStats={again:0,hard:0,good:0,easy:0}; studyQueue.sort(()=>Math.random()-.5);
+  document.getElementById('studySummary').classList.remove('show');
+  document.getElementById('flashcardScene').style.display=''; renderStudyCard();
+});
+document.getElementById('exitStudyBtn').addEventListener('click',exitStudy);
+document.getElementById('backToLibraryBtn').addEventListener('click',()=>{ exitStudy(); switchMode('library'); });
+function exitStudy(){ document.getElementById('studyOverlay').classList.remove('active'); document.body.style.overflow=''; renderLibrary(); }
+
+/* ============================================================ NOTE PICKER */
+let selectedNoteIds=new Set();
+function renderNotePicker(){
+  const notes=loadNotes(), list=document.getElementById('notePickerList'), cats=loadCats();
+  document.getElementById('selCount').textContent=selectedNoteIds.size+' selected';
+  if(!notes.length){ list.innerHTML='<div class="empty-notes">No notes found. <a href="note.html">Create some notes first →</a></div>'; return; }
+  list.innerHTML='';
+  notes.forEach(note=>{
+    const item=document.createElement('div');
+    const sel=selectedNoteIds.has(note.id);
+    item.className='note-pick-item'+(sel?' selected':'');
+    const tagsHtml=(note.category||[]).map(c=>{ const cat=cats.find(x=>x.name===c); return `<span class="note-pick-tag" style="background:${cat?.color||'#4ea8ff'}">${escH(c)}</span>`; }).join('');
+    item.innerHTML=`<div class="note-pick-cb">${sel?'✓':''}</div><div class="note-pick-info"><strong>${escH(note.title||'Untitled')}</strong><span>${escH((note.content||'').slice(0,80))}…</span>${tagsHtml?'<div class="note-pick-tags">'+tagsHtml+'</div>':''}</div>`;
+    item.addEventListener('click',()=>{ sel?selectedNoteIds.delete(note.id):selectedNoteIds.add(note.id); renderNotePicker(); });
+    list.appendChild(item);
+  });
+}
+document.getElementById('selectAllBtn').addEventListener('click',()=>{
+  const notes=loadNotes();
+  if(selectedNoteIds.size===notes.length) selectedNoteIds.clear(); else notes.forEach(n=>selectedNoteIds.add(n.id));
+  renderNotePicker();
+});
+document.getElementById('cardsPerNote').addEventListener('input',function(){ document.getElementById('cardsPerNoteVal').textContent=this.value; });
+
+/* ============================================================ AI GENERATION */
+let generatedCards=[];
+document.getElementById('generateBtn').addEventListener('click',generateCards);
+document.getElementById('regenBtn').addEventListener('click',generateCards);
+
+async function generateCards(){
+  if(!selectedNoteIds.size){ toast('Select at least one note!','warn'); return; }
+  const notes=loadNotes().filter(n=>selectedNoteIds.has(n.id));
+  const perNote=parseInt(document.getElementById('cardsPerNote').value);
+  const style=document.getElementById('cardStyle').value;
+  const diff=document.getElementById('cardDifficulty').value;
+  const btn=document.getElementById('generateBtn');
+  const btnText=document.getElementById('generateBtnText');
+  btn.disabled=true; btnText.innerHTML='<span class="spinner"></span> Generating…';
+
+  const notesText=notes.map(n=>`--- "${n.title||'Untitled'}" ---\n${(n.content||'').slice(0,1200)}`).join('\n\n');
+  const styleInst={
+    qa:'Create question-and-answer pairs. Question asks about a concept; answer provides concise explanation.',
+    definition:'Create term-definition pairs. "question" = key term; "answer" = its definition.',
+    cloze:'Create fill-in-the-blank cards. "question" = sentence with key word replaced by ___; "answer" = the missing word(s).',
+    mixed:'Mix question-answer, term-definition, and fill-in-the-blank styles.'
+  };
+  const diffInst={
+    easy:'Focus on broad, high-level concepts. Questions should be straightforward.',
+    medium:'Balance broad concepts with specific details.',
+    hard:'Focus on specific details, nuances, and precise definitions. Require deep recall.'
+  };
+
+  const prompt=`You are a flashcard generator. Given these notes, create exactly ${perNote} flashcard(s) per note.
+Style: ${styleInst[style]}
+Difficulty: ${diffInst[diff]}
+IMPORTANT: Respond ONLY with a valid JSON array. No preamble. No markdown. Just JSON.
+Format: [{"q":"question","a":"answer"}, ...]
+Notes:\n${notesText}\nGenerate ${notes.length*perNote} flashcards total. JSON only:`;
+
+  try {
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    const raw=data.content?.map(i=>i.text||'').join('');
+    let cards;
+    try { cards=JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+    catch { const m=raw.match(/\[[\s\S]*\]/); if(m) cards=JSON.parse(m[0]); else throw new Error('Parse failed'); }
+    generatedCards=cards.map(c=>({id:genId(),q:c.q||c.question||'',a:c.a||c.answer||'',createdAt:Date.now()}));
+    renderGeneratedCards();
+    document.getElementById('deckNameInput').value=notes.length===1?(notes[0].title||'My Deck'):'Study Deck';
+  } catch(e) { toast('Generation failed. Check console.','warn'); console.error(e); }
+  finally { btn.disabled=false; btnText.innerHTML='✨ Generate Flashcards'; }
+}
+
+function renderGeneratedCards(){
+  const grid=document.getElementById('genCardGrid');
+  const results=document.getElementById('genResults');
+  grid.innerHTML='';
+  document.getElementById('genResultsTitle').textContent='Generated Cards ('+generatedCards.length+')';
+  generatedCards.forEach((card,i)=>{
+    const el=document.createElement('div'); el.className='gen-card-item';
+    el.innerHTML=`<div class="gen-q">${escH(card.q)}</div><div class="gen-a">${escH(card.a)}</div><button class="gen-card-remove" data-idx="${i}">×</button>`;
+    el.querySelector('[data-idx]').addEventListener('click',()=>{ generatedCards.splice(i,1); renderGeneratedCards(); });
+    grid.appendChild(el);
+  });
+  results.classList.add('show');
+}
+
+document.getElementById('saveDeckBtn').addEventListener('click',()=>{
+  const name=document.getElementById('deckNameInput').value.trim();
+  if(!name){ toast('Enter a deck name!','warn'); return; }
+  if(!generatedCards.length){ toast('No cards to save!','warn'); return; }
+  const decks=loadDecks();
+  const idx=decks.findIndex(d=>d.name===name);
+  if(idx!==-1){ decks[idx].cards.push(...generatedCards); saveDecks(decks); toast(`Added ${generatedCards.length} cards to "${name}"!`,'success'); }
+  else { decks.push({name,cards:generatedCards,createdAt:Date.now()}); saveDecks(decks); toast(`Deck "${name}" saved with ${generatedCards.length} cards!`,'success'); }
+  generatedCards=[];
+  document.getElementById('genResults').classList.remove('show');
+  document.getElementById('deckNameInput').value='';
+});
+
+/* ============================================================ MANUAL CREATOR */
+let manualQueue=[], selectedDeckForManual=null;
+
+function renderManualDeckPicker(){
+  const decks=loadDecks(), row=document.getElementById('deckPickRow');
+  row.innerHTML='';
+  if(!decks.length){ row.innerHTML='<span style="font-size:12px;color:var(--muted);">No existing decks yet.</span>'; selectedDeckForManual=null; return; }
+  decks.forEach(deck=>{
+    const chip=document.createElement('button');
+    chip.className='deck-chip'+(selectedDeckForManual===deck.name?' active':'');
+    chip.textContent=deck.name;
+    chip.addEventListener('click',()=>{ selectedDeckForManual=selectedDeckForManual===deck.name?null:deck.name; renderManualDeckPicker(); });
+    row.appendChild(chip);
+  });
+}
+
+function renderManualCardList(){
+  const list=document.getElementById('manualCardList');
+  document.getElementById('queueCount').textContent='('+manualQueue.length+')';
+  if(!manualQueue.length){ list.innerHTML='<div class="preview-empty">Your queued cards will appear here.</div>'; return; }
+  list.innerHTML='';
+  manualQueue.forEach((card,i)=>{
+    const el=document.createElement('div'); el.className='mini-card';
+    el.innerHTML=`<span class="mini-card-num">${i+1}</span><div class="mini-q">${escH(card.q)}<span>${escH(card.a)}</span></div><button class="btn-danger-sm" data-idx="${i}">×</button>`;
+    el.querySelector('[data-idx]').addEventListener('click',()=>{ manualQueue.splice(i,1); renderManualCardList(); });
+    list.appendChild(el);
+  });
+}
+
+document.getElementById('addCardBtn').addEventListener('click',()=>{
+  const q=document.getElementById('manualQ').value.trim();
+  const a=document.getElementById('manualA').value.trim();
+  if(!q||!a){ toast('Fill in both question and answer!','warn'); return; }
+  const newName=document.getElementById('newDeckName').value.trim();
+  if(selectedDeckForManual&&!newName){
+    const decks=loadDecks(), idx=decks.findIndex(d=>d.name===selectedDeckForManual);
+    if(idx!==-1){ decks[idx].cards.push({id:genId(),q,a,createdAt:Date.now()}); saveDecks(decks); toast(`Added to "${selectedDeckForManual}"!`,'success'); document.getElementById('manualQ').value=''; document.getElementById('manualA').value=''; renderManualDeckPicker(); return; }
+  }
+  manualQueue.push({id:genId(),q,a,createdAt:Date.now()});
+  renderManualCardList();
+  document.getElementById('manualQ').value='';
+  document.getElementById('manualA').value='';
+  toast('Card added to queue!','success');
+});
+
+document.getElementById('clearCardFormBtn').addEventListener('click',()=>{ document.getElementById('manualQ').value=''; document.getElementById('manualA').value=''; });
+
+document.getElementById('saveQueueBtn').addEventListener('click',()=>{
+  if(!manualQueue.length){ toast('Queue is empty!','warn'); return; }
+  let name=document.getElementById('manualDeckSaveName').value.trim()||'My Deck';
+  const decks=loadDecks(), idx=decks.findIndex(d=>d.name===name);
+  if(idx!==-1){ decks[idx].cards.push(...manualQueue); saveDecks(decks); toast(`Added ${manualQueue.length} cards to "${name}"!`,'success'); }
+  else { decks.push({name,cards:manualQueue,createdAt:Date.now()}); saveDecks(decks); toast(`Deck "${name}" created!`,'success'); }
+  manualQueue=[]; document.getElementById('manualDeckSaveName').value=''; renderManualCardList(); renderManualDeckPicker();
+});
+
+document.getElementById('clearQueueBtn').addEventListener('click',async()=>{
+  if(!manualQueue.length)return;
+  const ok=await confirm2('Clear Queue','Remove all queued cards?');
+  if(ok){ manualQueue=[]; renderManualCardList(); }
+});
+
+/* ============================================================ INIT */
+renderLibrary();
+renderNotePicker();
+renderManualDeckPicker();
+renderManualCardList();
+</script>
+</body>
+</html>
