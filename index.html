@@ -685,23 +685,32 @@
   </nav>
 
   <!-- Mobile fullscreen menu -->
-  <dialog id="navMobileMenu">
+  <div id="navMobileMenu" role="dialog" aria-modal="true">
     <button class="close-menu" id="navMenuClose" aria-label="Close menu">×</button>
     <a href="#features"  onclick="closeMobileMenu()">Features</a>
     <a href="#tutorial"  onclick="closeMobileMenu()">Tutorial</a>
     <a href="#shortcuts" onclick="closeMobileMenu()">Shortcuts</a>
-    <a href="games.html">🎮 Play Zone</a>
-    <a href="note.html" style="color:var(--gold);">Open Website →</a>
-  </dialog>
+    <a href="games.html" onclick="closeMobileMenu()">🎮 Play Zone</a>
+    <a href="note.html"  onclick="closeMobileMenu()" style="color:var(--gold);">Open App →</a>
+  </div>
   <script>
-    const navMobileMenu = document.getElementById('navMobileMenu');
     function closeMobileMenu() {
-      navMobileMenu.close();
+      document.getElementById('navMobileMenu').classList.remove('open');
+      document.body.style.overflow = '';
     }
     document.getElementById('navHamburger').addEventListener('click', () => {
-      navMobileMenu.showModal();
+      document.getElementById('navMobileMenu').classList.add('open');
+      document.body.style.overflow = 'hidden';
     });
     document.getElementById('navMenuClose').addEventListener('click', closeMobileMenu);
+
+    // Safety: always restore scroll on page show (e.g. back-navigation)
+    window.addEventListener('pageshow', () => { document.body.style.overflow = ''; });
+
+    // Close menu when clicking the backdrop (outside the links)
+    document.getElementById('navMobileMenu').addEventListener('click', function(e) {
+      if (e.target === this) closeMobileMenu();
+    });
   </script>
 
   <!-- HERO -->
@@ -737,7 +746,7 @@
         Find it.
       </h1>
       <p class="hero-sub">
-        Pen To Text is a beautiful, fully local notes website. Organize with categories,
+        Pen To Text is a beautiful, fully local notes app. Organize with categories,
         search instantly, capture ideas with your voice — all stored right in your browser.
       </p>
       <div class="hero-actions">
