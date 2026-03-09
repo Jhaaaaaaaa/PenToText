@@ -319,7 +319,6 @@ nav{position:sticky;top:0;z-index:90;display:flex;align-items:center;justify-con
     <div class="nav-links">
       <a href="#" class="active" id="navPlay">Play Zone</a>
       <a href="note.html">My Notes</a>
-      <a href="flashcards.html">🃏 Flashcards</a>
     </div>
     <a href="index.html" class="nav-back">← Home</a>
   </div>
@@ -330,7 +329,23 @@ nav{position:sticky;top:0;z-index:90;display:flex;align-items:center;justify-con
   <div class="hero-eyebrow">Games & Tools</div>
   <h1>The <em>Play Zone</em></h1>
   <p>Sharpen your mind, pass the time, or just unwind. All games save your progress locally.</p>
+
+  <!-- Rotating quote -->
+  <p id="gamesQuote" style="
+    margin: 20px auto 0;
+    max-width: 440px;
+    font-size: 13px;
+    font-style: italic;
+    color: var(--muted);
+    padding: 8px 18px;
+    border: 1px solid rgba(201,151,74,0.2);
+    border-radius: 99px;
+    background: rgba(201,151,74,0.06);
+    transition: opacity 0.5s;
+  ">✨ The more you write, the clearer your thinking becomes.</p>
 </div>
+
+
 
 <!-- TABS -->
 <div class="tabs-wrap">
@@ -1510,6 +1525,25 @@ function showToast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),3000);
 }
+
+/* Rotating inspirational quotes */
+const GAME_QUOTES=[
+  "✨ The more you write, the clearer your thinking becomes.",
+  "💡 Every expert was once a beginner who kept notes.",
+  "📝 A small note today is a big idea tomorrow.",
+  "🚀 You don't have to be great to start, but you have to start to be great.",
+  "🧠 Your brain is for having ideas, not storing them.",
+  "✍️ The palest ink is better than the best memory.",
+  "🌟 Progress is made one note at a time.",
+  "🎯 Capture everything. You'll know what matters later.",
+  "💫 Words on paper outlive the thoughts in your head.",
+  "🔥 Don't just dream it — write it, plan it, do it.",
+  "📖 Knowledge grows when it's written down and revisited.",
+  "⭐ One idea written down is worth a thousand remembered.",
+];
+const gqEl=document.getElementById('gamesQuote');
+let gqIdx=Math.floor(Math.random()*GAME_QUOTES.length);
+if(gqEl){gqEl.textContent=GAME_QUOTES[gqIdx];setInterval(()=>{gqEl.style.opacity='0';setTimeout(()=>{gqIdx=(gqIdx+1)%GAME_QUOTES.length;gqEl.textContent=GAME_QUOTES[gqIdx];gqEl.style.opacity='1';},500);},7000);}
 </script>
 </body>
 </html>

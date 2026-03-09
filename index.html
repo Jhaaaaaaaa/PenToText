@@ -350,6 +350,37 @@
 
     .feature-card p { font-size: 14px; font-weight: 300; color: var(--muted); line-height: 1.7; }
 
+    /* INSPIRATIONAL QUOTE — homepage hero */
+    .hero-quote-wrap {
+      margin-top: 36px;
+      animation: fadeUp 0.6s 0.4s ease both;
+    }
+
+    .hero-quote {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(201,151,74,0.08);
+      border: 1px solid rgba(201,151,74,0.25);
+      border-radius: 99px;
+      padding: 10px 22px;
+      font-size: 13.5px;
+      font-style: italic;
+      color: var(--muted);
+      max-width: 540px;
+      transition: opacity 0.5s ease;
+    }
+
+    .hero-quote-mark {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      color: var(--gold);
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .hero-quote.fading { opacity: 0; }
+
     /* TUTORIAL */
     .tutorial-header { max-width: 560px; margin-bottom: 70px; }
 
@@ -547,7 +578,7 @@
       <li><a href="#tutorial">Tutorial</a></li>
       <li><a href="#shortcuts">Shortcuts</a></li>
       <li><a href="games.html">🎮 Play Zone</a></li>
-      <li><a href="note.html" class="nav-cta">Open Notes →</a></li>
+      <li><a href="note.html" class="nav-cta">Open App →</a></li>
     </ul>
   </nav>
 
@@ -584,12 +615,18 @@
         Find it.
       </h1>
       <p class="hero-sub">
-        Pen To Text is a beautiful, fully local notes website. Organize with categories,
+        Pen To Text is a beautiful, fully local notes app. Organize with categories,
         search instantly, capture ideas with your voice — all stored right in your browser.
       </p>
       <div class="hero-actions">
         <a href="note.html" class="btn-primary">Start Writing →</a>
         <a href="#tutorial" class="btn-outline">See How It Works</a>
+      </div>
+      <div class="hero-quote-wrap">
+        <span class="hero-quote" id="heroQuote">
+          <span class="hero-quote-mark">"</span>
+          <span id="heroQuoteText">The secret of getting ahead is getting started.</span>
+        </span>
       </div>
     </div>
   </section>
@@ -647,6 +684,16 @@
         <h3>Dark Mode</h3>
         <p>Toggle between a warm paper-white theme and a deep dark mode. Your preference is saved and restored on every visit.</p>
       </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🃏</span>
+        <h3>Flashcards</h3>
+        <p>Turn any note into a flashcard study set. Review key concepts, quiz yourself, and reinforce what you've written — all without leaving the app.</p>
+      </div>
+      <div class="feature-card reveal">
+        <span class="feature-icon">🎨</span>
+        <h3>Group by Color</h3>
+        <p>Sort notes by their assigned color to instantly cluster related cards together. A visual way to scan and organize your workspace at a glance.</p>
+      </div>
     </div>
   </section>
 
@@ -703,6 +750,15 @@
             <span class="step-tip">Export regularly — local storage can be cleared by the browser.</span>
           </div>
         </div>
+
+        <div class="step">
+          <div class="step-number">6</div>
+          <div class="step-body">
+            <h3>Study with Flashcards</h3>
+            <p>Any note can become a flashcard. Select a note and launch flashcard mode to quiz yourself on the content. Perfect for study sessions, vocabulary lists, or memorizing key facts you've captured.</p>
+            <span class="step-tip">Use flashcards alongside color-coded categories to organize your study topics.</span>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -738,15 +794,59 @@
   <!-- FOOTER -->
   <footer>
     <span>Pen To Text — a local-first notes organizer</span>
-    <span>Built with HTML, CSS &amp; JS &nbsp;·&nbsp; <a href="note.html">Open Website</a></span>
+    <span>Built with HTML, CSS &amp; JS &nbsp;·&nbsp; <a href="note.html">Open App</a></span>
   </footer>
 
   <script>
+    /* Scroll reveal */
     const observer = new IntersectionObserver(
       entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
       { threshold: 0.15 }
     );
     document.querySelectorAll('.reveal, .step').forEach(el => observer.observe(el));
+
+    /* Inspirational quote rotator */
+    const QUOTES = [
+      "The secret of getting ahead is getting started.",
+      "A small note today is a big idea tomorrow.",
+      "Write it down. Your future self will thank you.",
+      "Ideas are worthless until you capture them.",
+      "Organization is not about perfection — it's about efficiency.",
+      "The palest ink is better than the best memory.",
+      "You don't have to be great to start, but you have to start to be great.",
+      "Every expert was once a beginner who kept notes.",
+      "Clarity comes from writing, not just thinking.",
+      "Your brain is for having ideas, not storing them.",
+      "One idea written down is worth a thousand remembered.",
+      "Progress is made one note at a time.",
+      "Capture everything. You'll know what matters later.",
+      "Good notes today make great decisions tomorrow.",
+      "The more you write, the clearer your thinking becomes.",
+      "Don't just dream it — write it, plan it, do it.",
+      "Knowledge grows when it's written down and revisited.",
+      "Every great journey begins with a single written step.",
+      "Words on paper outlive the thoughts in your head.",
+      "Keep a notebook. Travel with it. Create in it. Share it.",
+    ];
+
+    let quoteIndex = Math.floor(Math.random() * QUOTES.length);
+    const quoteEl = document.getElementById('heroQuoteText');
+    const quoteWrap = document.getElementById('heroQuote');
+
+    function rotateQuote() {
+      quoteWrap.classList.add('fading');
+      setTimeout(() => {
+        quoteIndex = (quoteIndex + 1) % QUOTES.length;
+        quoteEl.textContent = QUOTES[quoteIndex];
+        quoteWrap.classList.remove('fading');
+      }, 500);
+    }
+
+    // Set initial quote
+    if (quoteEl) quoteEl.textContent = QUOTES[quoteIndex];
+
+    // Rotate every 6 seconds
+    setInterval(rotateQuote, 6000);
   </script>
 
 </body>

@@ -42,7 +42,6 @@
     <button id="customizeBtn" title="Customize">⚙️</button>
     <a href="games.html" title="Play Zone" style="padding:0 14px;height:38px;border-radius:9999px;border:1.5px solid rgba(240,235,224,0.15);background:transparent;color:#8a7f70;font-size:13px;display:inline-flex;align-items:center;text-decoration:none;transition:all .2s;">🎮 Games</a>
     <a href="index.html" title="Homepage">← Home</a>
-    <a href="flashcards.html">🃏 Flashcards</a>
 
     <!-- Mobile overflow menu button -->
     <button id="mobileMenuBtn" title="More options">⋯</button>
@@ -99,6 +98,23 @@
     <div class="view-bar">
       <h2 class="view-title" id="viewTitle">All Notes</h2>
       <span class="view-count" id="viewCount">0 notes</span>
+    </div>
+
+    <!-- Rotating inspirational quote -->
+    <div id="appQuoteBanner" style="
+      display:flex; align-items:center; gap:8px;
+      margin: 0 0 16px;
+      padding: 10px 16px;
+      background: rgba(201,151,74,0.07);
+      border: 1px solid rgba(201,151,74,0.18);
+      border-radius: 10px;
+      font-size: 12.5px;
+      font-style: italic;
+      color: var(--muted);
+      transition: opacity 0.5s ease;
+    ">
+      <span style="font-family:'Playfair Display',serif;font-size:22px;color:var(--gold);line-height:1;flex-shrink:0;">"</span>
+      <span id="appQuoteText">The secret of getting ahead is getting started.</span>
     </div>
 
     <div id="notesContainer" class="notes-grid"></div>
@@ -280,6 +296,48 @@
   // Also update on any category click
   document.getElementById('categoryList').addEventListener('click', () => setTimeout(updateViewBar, 80));
   document.getElementById('searchBar').addEventListener('input', () => setTimeout(updateViewBar, 280));
+
+  /* ============================================================
+     Rotating inspirational quotes
+     ============================================================ */
+  const APP_QUOTES = [
+    "The secret of getting ahead is getting started.",
+    "A small note today is a big idea tomorrow.",
+    "Write it down. Your future self will thank you.",
+    "Ideas are worthless until you capture them.",
+    "The palest ink is better than the best memory.",
+    "You don't have to be great to start, but you have to start to be great.",
+    "Every expert was once a beginner who kept notes.",
+    "Clarity comes from writing, not just thinking.",
+    "Your brain is for having ideas, not storing them.",
+    "One idea written down is worth a thousand remembered.",
+    "Progress is made one note at a time.",
+    "Capture everything. You'll know what matters later.",
+    "Good notes today make great decisions tomorrow.",
+    "The more you write, the clearer your thinking becomes.",
+    "Don't just dream it — write it, plan it, do it.",
+    "Knowledge grows when it's written down and revisited.",
+    "Every great journey begins with a single written step.",
+    "Words on paper outlive the thoughts in your head.",
+    "Keep a notebook. Travel with it. Create in it. Share it.",
+    "Organization is not about perfection — it's about efficiency.",
+  ];
+
+  const appQuoteEl = document.getElementById('appQuoteText');
+  const appQuoteBanner = document.getElementById('appQuoteBanner');
+  let appQuoteIdx = Math.floor(Math.random() * APP_QUOTES.length);
+
+  function rotateAppQuote() {
+    appQuoteBanner.style.opacity = '0';
+    setTimeout(() => {
+      appQuoteIdx = (appQuoteIdx + 1) % APP_QUOTES.length;
+      appQuoteEl.textContent = APP_QUOTES[appQuoteIdx];
+      appQuoteBanner.style.opacity = '1';
+    }, 500);
+  }
+
+  if (appQuoteEl) appQuoteEl.textContent = APP_QUOTES[appQuoteIdx];
+  setInterval(rotateAppQuote, 7000);
 </script>
 
 </body>
