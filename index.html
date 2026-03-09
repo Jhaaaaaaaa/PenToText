@@ -677,7 +677,7 @@
       <li><a href="#tutorial">Tutorial</a></li>
       <li><a href="#shortcuts">Shortcuts</a></li>
       <li><a href="games.html">🎮 Play Zone</a></li>
-      <li><a href="note.html" class="nav-cta">Open Website →</a></li>
+      <li><a href="note.html" class="nav-cta">Open App →</a></li>
     </ul>
     <button id="navHamburger" aria-label="Open menu">
       <span></span><span></span><span></span>
@@ -694,13 +694,12 @@
     <a href="note.html" style="color:var(--gold);">Open Website →</a>
   </dialog>
   <script>
+    const navMobileMenu = document.getElementById('navMobileMenu');
     function closeMobileMenu() {
-      document.getElementById('navMobileMenu').classList.remove('open');
-      document.body.style.overflow = '';
+      navMobileMenu.close();
     }
     document.getElementById('navHamburger').addEventListener('click', () => {
-      document.getElementById('navMobileMenu').classList.add('open');
-      document.body.style.overflow = 'hidden';
+      navMobileMenu.showModal();
     });
     document.getElementById('navMenuClose').addEventListener('click', closeMobileMenu);
   </script>
@@ -909,7 +908,7 @@
     <div class="reveal">
       <p class="section-label">Ready?</p>
       <h2 class="section-title">Your notes are waiting.</h2>
-      <p class="section-sub">The path to success is here.</p>
+      <p class="section-sub">No sign-up. No internet required. Everything lives right here in your browser.</p>
       <a href="note.html" class="btn-primary">Open Pen To Text →</a>
     </div>
   </section>
@@ -974,5 +973,3 @@
 
 </body>
 </html>
-
-

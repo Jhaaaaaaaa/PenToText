@@ -852,6 +852,8 @@ function toggleSpeech() {
 function openModal() {
   noteModal.style.display = "flex";
   noteModal.setAttribute("aria-hidden", "false");
+  noteModal.dataset.justOpened = "1";
+  setTimeout(() => delete noteModal.dataset.justOpened, 50);
   modalTitle.textContent = isEditing ? "Edit Note" : "Add Note";
   setTimeout(() => noteTitleEl.focus(), 50);
 }
@@ -868,6 +870,9 @@ function openCustomizeModal() {
   defaultNoteColorEl.value     = defaultNoteColor;
   customizeModal.style.display = "flex";
   customizeModal.setAttribute("aria-hidden", "false");
+  // Prevent the opening click from immediately closing the modal via backdrop listener
+  customizeModal.dataset.justOpened = "1";
+  setTimeout(() => delete customizeModal.dataset.justOpened, 50);
 }
 
 function closeCustomizeModal() {
@@ -933,13 +938,19 @@ function wireEvents() {
   cancelBtn.addEventListener("click", closeNoteModal);
   saveNoteBtn.addEventListener("click", saveNote);
   modalVoiceBtn.addEventListener("click", toggleSpeech);
-  noteModal.addEventListener("click", e => { if (e.target === noteModal) closeNoteModal(); });
+  noteModal.addEventListener("click", e => {
+    if (e.target === noteModal && !noteModal.dataset.justOpened) closeNoteModal();
+  });
+  noteModal.querySelector(".modal-content").addEventListener("click", e => e.stopPropagation());
 
   /* Customize modal */
   closeCustomize.addEventListener("click", closeCustomizeModal);
   applyCustomizationBtn.addEventListener("click", applyCustomization);
   resetDataBtn.addEventListener("click", resetAllData);
-  customizeModal.addEventListener("click", e => { if (e.target === customizeModal) closeCustomizeModal(); });
+  customizeModal.addEventListener("click", e => {
+    if (e.target === customizeModal && !customizeModal.dataset.justOpened) closeCustomizeModal();
+  });
+  customizeModal.querySelector(".modal-content").addEventListener("click", e => e.stopPropagation());
 
   /* Keyboard shortcuts */
   document.addEventListener("keydown", e => {
@@ -1031,6 +1042,8 @@ function openFlashcardManager(noteId) {
   renderFlashcardList();
   modal.style.display = "flex";
   modal.setAttribute("aria-hidden", "false");
+  modal.dataset.justOpened = "1";
+  setTimeout(() => delete modal.dataset.justOpened, 50);
 }
 
 function closeFlashcardManager() {
