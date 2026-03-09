@@ -806,6 +806,7 @@ aside::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius
   overflow: hidden;
   display: -webkit-box;
   -webkit-line-clamp: 5;
+  line-clamp: 5;
   -webkit-box-orient: vertical;
 }
 
@@ -900,6 +901,8 @@ aside::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius
 [data-theme="dark"] .note-card:hover {
   border-color: rgba(201,151,74,0.35);
 }
+
+.empty-state {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
@@ -1173,6 +1176,7 @@ aside::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius
 @media (max-width: 900px) {
   :root { --sidebar-w: 230px; }
   #sortNotes { display: none; }
+  .notes-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
 }
 
 /* -------------------------------------------------------------
@@ -1181,8 +1185,9 @@ aside::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius
 @media (max-width: 680px) {
   :root { --header-h: 56px; }
 
+  /* Header */
   header { padding: 0 12px; gap: 8px; }
-  header h1 { font-size: 17px; padding-right: 10px; }
+  header h1 { font-size: 17px; padding-right: 10px; border-right: none; }
 
   /* Show mobile-only elements */
   #mobileMenuBtn { display: flex; }
@@ -1194,7 +1199,7 @@ aside::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius
   #themeToggle, #customizeBtn,
   header a[href="index.html"] { display: none !important; }
 
-  #searchBar { max-width: none; }
+  #searchBar { max-width: none; min-width: 0; flex: 1; }
 
   /* Off-canvas sidebar */
   aside {
@@ -1206,54 +1211,108 @@ aside::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius
     transform: translateX(-100%);
     box-shadow: var(--shadow-lg);
     transition: transform 0.28s var(--ease);
-    width: 280px;
+    width: min(280px, 80vw);
+    overflow-y: auto;
   }
-
   aside.open { transform: translateX(0); }
 
-  #mainArea { padding: 14px 12px; }
+  /* Main area */
+  #mainArea { padding: 12px 10px 80px; }
 
+  /* Notes grid — single column on phones */
   .notes-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 12px;
   }
 
+  /* Note card — bigger tap targets */
+  .note-card { padding: 16px 14px 12px; min-height: 110px; }
+  .note-card:hover { transform: none; box-shadow: var(--shadow-card); }
+  .note-card h3 { font-size: 15px; }
+  .note-preview { font-size: 13px; -webkit-line-clamp: 4; line-clamp: 4; }
+
   /* Always show card controls on touch */
   .card-controls {
-    opacity: 1;
-    transform: none;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
   }
 
-  /* Bottom sheet modal */
+  /* Larger card action buttons */
+  .card-controls button {
+    padding: 7px 12px;
+    font-size: 12.5px;
+    min-height: 34px;
+  }
+
+  /* Flash btn size */
+  .flash-btn { padding: 6px 10px; font-size: 12px; }
+
+  /* View bar */
+  .view-title { font-size: 20px; }
+  .view-bar   { gap: 8px; margin-bottom: 10px; }
+
+  /* Quote banner — hide on very small screens to save space */
+  #appQuoteBanner { display: none; }
+
+  /* Bottom sheet modals */
   .modal {
     align-items: flex-end;
     padding: 0;
   }
-
   .modal-content {
     max-width: 100%;
+    width: 100%;
     border-radius: var(--r-xl) var(--r-xl) 0 0;
-    padding: 20px 16px 28px;
+    padding: 20px 16px 16px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    max-height: 92dvh;
     max-height: 92vh;
     overflow-y: auto;
     animation: modalUp 0.3s var(--spring);
   }
-
   @keyframes modalUp {
     from { opacity: 0; transform: translateY(40px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  .view-title { font-size: 21px; }
-  .view-bar   { gap: 8px; }
+  /* Modal form elements — bigger touch targets */
+  .modal-content input[type="text"],
+  .modal-content textarea { font-size: 16px; padding: 11px 13px; } /* 16px prevents iOS zoom */
+  .modal-content textarea { min-height: 120px; }
+  .btn-primary, .btn-ghost, .btn-danger {
+    height: 44px;
+    font-size: 15px;
+    flex: 1;
+  }
+  .modal-actions { gap: 10px; }
+  #modalVoiceBtn { width: 44px; height: 44px; font-size: 17px; }
+
+  /* Flashcard modal */
+  .fc-modal-content { max-width: 100% !important; width: 100% !important; }
+  .fc-card-list { max-height: 260px; }
+  .fc-list-item { grid-template-columns: 1fr; gap: 6px; }
+  .fc-list-back { padding-left: 0; border-left: none; border-top: 1px solid var(--border); padding-top: 6px; }
+  .fc-study-card { height: 180px; }
+  .fc-study-face { padding: 18px 20px; }
+  .fc-study-front p, .fc-study-back p { font-size: 14px; }
+
+  /* Sort accessible in drawer — add sort label */
+  .drawer-sort-wrap { display: flex !important; }
+
+  /* Mobile drawer — bigger rows */
+  .drawer-row { gap: 8px; }
+  #mobileDrawer button, #mobileDrawer a { height: 48px; font-size: 14px; }
 }
 
 /* -------------------------------------------------------------
    14. Responsive — Small phones (≤ 400px)
    ------------------------------------------------------------- */
 @media (max-width: 400px) {
-  .notes-grid { grid-template-columns: 1fr; }
-  header h1   { font-size: 15px; }
+  header h1 { font-size: 15px; }
+  .notes-grid { gap: 10px; }
+  .note-card { padding: 14px 12px 10px; }
+  .card-controls button { padding: 6px 8px; font-size: 11.5px; }
+  .fc-study-card { height: 160px; }
 }
 
 /* -------------------------------------------------------------
@@ -1431,16 +1490,4 @@ aside::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius
   color-scheme: dark;
 }
 
-/* Responsive: stack card list on small screens */
-@media (max-width: 480px) {
-  .fc-list-item {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto;
-  }
-  .fc-list-back {
-    padding-left: 0;
-    border-left: none;
-    border-top: 1px solid var(--border);
-    padding-top: 6px;
-  }
-}
+/* Responsive: stack card list on small screens — handled in main media queries above */

@@ -61,7 +61,21 @@
   <div class="drawer-row">
     <button id="drawerThemeBtn">🌙 Theme</button>
     <button id="drawerCustomizeBtn">⚙️ Settings</button>
-    <a href="index.html">← Home</a>
+  </div>
+  <div class="drawer-row drawer-sort-wrap" style="display:none;">
+    <select id="drawerSortNotes" style="flex:1;height:48px;padding:0 14px;border-radius:12px;border:1.5px solid var(--border-strong);background:var(--bg2);color:var(--ink);font-family:var(--font-body);font-size:14px;outline:none;cursor:pointer;">
+      <option value="dateDesc">🗓 Date (Newest)</option>
+      <option value="dateAsc">🗓 Date (Oldest)</option>
+      <option value="titleAsc">🔤 Title (A→Z)</option>
+      <option value="titleDesc">🔤 Title (Z→A)</option>
+      <option value="editedDesc">✏️ Last Edited</option>
+      <option value="wordCountDesc">📝 Word Count ↓</option>
+      <option value="color">🎨 Group by Color</option>
+    </select>
+  </div>
+  <div class="drawer-row">
+    <a href="games.html" style="text-decoration:none;">🎮 Play Zone</a>
+    <a href="index.html" style="text-decoration:none;">← Home</a>
   </div>
 </div>
 
@@ -125,23 +139,24 @@
 <!-- ============================================================
      MODAL — Add / Edit Note
      ============================================================ -->
-<div id="noteModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+<dialog id="noteModal" class="modal">
   <div class="modal-content">
     <button class="close" id="closeModal" aria-label="Close">&times;</button>
     <h2 id="modalTitle">Add Note</h2>
 
+    <label for="noteTitle">Title <small>— optional</small></label>
     <input id="noteTitle" type="text" placeholder="Title (optional)" />
 
-    <label>Categories</label>
+    <label for="noteCategoryOptions">Categories</label>
     <div id="noteCategoryOptions"></div>
 
-    <label>Note Color <small>— overrides category color</small></label>
+    <label for="noteColorPicker">Note Color <small>— overrides category color</small></label>
     <input id="noteColorPicker" type="color" value="#ffffff" />
 
-    <label>Image <small>— optional</small></label>
+    <label for="noteImage">Image <small>— optional</small></label>
     <input id="noteImage" type="file" accept="image/*" />
 
-    <label>Content</label>
+    <label for="noteContent">Content</label>
     <textarea id="noteContent" placeholder="Write your note…"></textarea>
 
     <div class="modal-actions">
@@ -155,15 +170,15 @@
 <!-- ============================================================
      MODAL — Customize
      ============================================================ -->
-<div id="customizeModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+<dialog id="customizeModal" class="modal" aria-hidden="true">
   <div class="modal-content">
     <button class="close" id="closeCustomize" aria-label="Close">&times;</button>
     <h2>Settings</h2>
 
-    <label>Default Category Color</label>
+    <label for="defaultCategoryColor">Default Category Color</label>
     <input id="defaultCategoryColor" type="color" value="#4ea8ff" />
 
-    <label>Default Note Color</label>
+    <label for="defaultNoteColor">Default Note Color</label>
     <input id="defaultNoteColor" type="color" value="#ffffff" />
 
     <div class="modal-actions">
@@ -178,7 +193,7 @@
 <!-- ============================================================
      MODAL — Flashcard Manager
      ============================================================ -->
-<div id="flashcardModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+<dialog id="flashcardModal" class="modal" aria-hidden="true" style="display:none;">
   <div class="modal-content fc-modal-content">
 
     <!-- MANAGER VIEW -->
@@ -209,10 +224,10 @@
       </div>
       <input type="hidden" id="fcEditorIndex" value="-1" />
 
-      <label style="font-size:13px;font-weight:500;color:var(--ink2);">Front <span style="color:var(--muted);font-weight:300;">(question / term)</span></label>
+      <label for="fcFrontInput" style="font-size:13px;font-weight:500;color:var(--ink2);">Front <span style="color:var(--muted);font-weight:300;">(question / term)</span></label>
       <textarea id="fcFrontInput" class="fc-textarea" placeholder="e.g. What is photosynthesis?" rows="3"></textarea>
 
-      <label style="font-size:13px;font-weight:500;color:var(--ink2);">Back <span style="color:var(--muted);font-weight:300;">(answer / definition)</span></label>
+      <label for="fcBackInput" style="font-size:13px;font-weight:500;color:var(--ink2);">Back <span style="color:var(--muted);font-weight:300;">(answer / definition)</span></label>
       <textarea id="fcBackInput" class="fc-textarea" placeholder="e.g. The process by which plants convert sunlight into energy." rows="4"></textarea>
 
       <div class="modal-actions">
@@ -230,7 +245,7 @@
 
       <span id="fcStudyCounter" style="font-size:13px;color:var(--muted);">1 / 1</span>
 
-      <div id="fcStudyCard" class="fc-study-card" onclick="flipStudyCard()">
+      <button id="fcStudyCard" class="fc-study-card" onclick="flipStudyCard()" title="Press Enter or Space to flip">
         <div class="fc-study-inner">
           <div class="fc-study-face fc-study-front">
             <span class="fc-face-label">Front</span>
@@ -241,9 +256,9 @@
             <p id="fcStudyBack"></p>
           </div>
         </div>
-      </div>
+      </button>
 
-      <p style="font-size:12px;color:var(--muted);">Click the card to flip it</p>
+      <p style="font-size:12px;color:var(--muted);" id="fcFlipHint">Click the card to flip it</p>
 
       <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
         <button id="fcPrevBtn" class="btn-ghost" style="font-size:13px;padding:9px 18px;">← Prev</button>
@@ -340,6 +355,23 @@
     document.getElementById('customizeBtn').click();
   });
 
+  // Show sort row in drawer (it's hidden via CSS on desktop, shown on mobile via the class)
+  const drawerSortWrap = document.querySelector('.drawer-sort-wrap');
+  const drawerSortNotes = document.getElementById('drawerSortNotes');
+  if (drawerSortWrap) drawerSortWrap.style.display = 'flex';
+
+  drawerSortNotes.addEventListener('change', e => {
+    const mainSort = document.getElementById('sortNotes');
+    mainSort.value = e.target.value;
+    mainSort.dispatchEvent(new Event('change'));
+  });
+
+  // Sync drawer sort with main sort when app loads
+  setTimeout(() => {
+    const mainSort = document.getElementById('sortNotes');
+    if (mainSort && drawerSortNotes) drawerSortNotes.value = mainSort.value;
+  }, 150);
+
   /* ============================================================
      View bar updates — patch renderNotes to update title/count
      ============================================================ */
@@ -393,6 +425,27 @@
   document.getElementById('fcFlipBtn').addEventListener('click', flipStudyCard);
   document.getElementById('fcNextBtn').addEventListener('click', nextStudyCard);
   document.getElementById('fcPrevBtn').addEventListener('click', prevStudyCard);
+
+  // Update flip hint for touch devices
+  if ('ontouchstart' in window) {
+    const hint = document.getElementById('fcFlipHint');
+    if (hint) hint.textContent = 'Tap the card to flip it';
+  }
+
+  // Swipe left/right on study card to navigate
+  let fcTouchStartX = 0;
+  document.getElementById('fcStudyCard').addEventListener('touchstart', e => {
+    fcTouchStartX = e.touches[0].clientX;
+  }, { passive: true });
+  document.getElementById('fcStudyCard').addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - fcTouchStartX;
+    if (Math.abs(dx) > 50) {
+      if (dx < 0) nextStudyCard();
+      else prevStudyCard();
+    } else {
+      flipStudyCard();
+    }
+  }, { passive: true });
 
   /* ============================================================
      Rotating inspirational quotes

@@ -562,9 +562,108 @@
       footer { flex-direction: column; gap: 10px; text-align: center; }
     }
 
-    @media (max-width: 600px) {
-      .nav-links li:not(:last-child) { display: none; }
-      .hero-title { font-size: 42px; }
+    /* Mobile hamburger menu */
+    #navHamburger {
+      display: none;
+      background: none;
+      border: 1.5px solid var(--line);
+      border-radius: 8px;
+      width: 40px; height: 40px;
+      cursor: pointer;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      padding: 0;
+    }
+    #navHamburger span {
+      display: block;
+      width: 20px; height: 2px;
+      background: var(--ink);
+      border-radius: 2px;
+      transition: all 0.25s;
+    }
+    #navMobileMenu {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: var(--paper);
+      z-index: 200;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+    }
+    #navMobileMenu.open { display: flex; }
+    #navMobileMenu a {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--ink);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    #navMobileMenu a:hover { color: var(--gold); }
+    #navMobileMenu .close-menu {
+      position: absolute;
+      top: 20px; right: 20px;
+      background: none;
+      border: none;
+      font-size: 32px;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 1;
+    }
+
+    @media (max-width: 680px) {
+      nav { padding: 14px 20px; }
+      .nav-links { display: none; }
+      #navHamburger { display: flex; }
+
+      .hero {
+        min-height: 100svh;
+        min-height: 100vh;
+        padding: 90px 20px 60px;
+      }
+      .hero-title { font-size: clamp(38px, 11vw, 60px); }
+      .hero-sub { font-size: 15px; margin-bottom: 36px; }
+      .hero-actions { gap: 10px; }
+      .hero-actions a { padding: 13px 26px; font-size: 14px; width: 100%; text-align: center; }
+      .hero-quote { font-size: 12.5px; padding: 9px 16px; border-radius: 12px; }
+
+      section { padding: 60px 20px; }
+      .features-header { margin-bottom: 40px; }
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .feature-card { padding: 24px 20px; }
+      .feature-card:hover { transform: none; }
+
+      .tutorial-header { margin-bottom: 40px; }
+      .steps::before { left: 22px; }
+      .step {
+        grid-template-columns: 44px 1fr;
+        gap: 18px;
+        padding: 24px 0;
+      }
+      .step-number { width: 44px; height: 44px; font-size: 17px; }
+      .step-body h3 { font-size: 18px; }
+      .step-body p { font-size: 14px; }
+
+      #shortcuts { padding: 60px 20px; }
+      .shortcut-list li { flex-direction: column; align-items: flex-start; gap: 8px; }
+
+      #cta { padding: 70px 20px; }
+      #cta .section-sub { margin-bottom: 28px; }
+      #cta .hero-actions a { width: auto; }
+
+      footer { padding: 24px 20px; font-size: 12px; }
+    }
+
+    @media (max-width: 400px) {
+      .hero-title { font-size: 34px; }
+      .feature-card { padding: 20px 16px; }
     }
   </style>
 </head>
@@ -578,9 +677,33 @@
       <li><a href="#tutorial">Tutorial</a></li>
       <li><a href="#shortcuts">Shortcuts</a></li>
       <li><a href="games.html">🎮 Play Zone</a></li>
-      <li><a href="note.html" class="nav-cta">Open App →</a></li>
+      <li><a href="note.html" class="nav-cta">Open Website →</a></li>
     </ul>
+    <button id="navHamburger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </button>
   </nav>
+
+  <!-- Mobile fullscreen menu -->
+  <dialog id="navMobileMenu">
+    <button class="close-menu" id="navMenuClose" aria-label="Close menu">×</button>
+    <a href="#features"  onclick="closeMobileMenu()">Features</a>
+    <a href="#tutorial"  onclick="closeMobileMenu()">Tutorial</a>
+    <a href="#shortcuts" onclick="closeMobileMenu()">Shortcuts</a>
+    <a href="games.html">🎮 Play Zone</a>
+    <a href="note.html" style="color:var(--gold);">Open Website →</a>
+  </dialog>
+  <script>
+    function closeMobileMenu() {
+      document.getElementById('navMobileMenu').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    document.getElementById('navHamburger').addEventListener('click', () => {
+      document.getElementById('navMobileMenu').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    });
+    document.getElementById('navMenuClose').addEventListener('click', closeMobileMenu);
+  </script>
 
   <!-- HERO -->
   <section class="hero">
@@ -615,7 +738,7 @@
         Find it.
       </h1>
       <p class="hero-sub">
-        Pen To Text is a beautiful, fully local notes app. Organize with categories,
+        Pen To Text is a beautiful, fully local notes website. Organize with categories,
         search instantly, capture ideas with your voice — all stored right in your browser.
       </p>
       <div class="hero-actions">
@@ -786,7 +909,7 @@
     <div class="reveal">
       <p class="section-label">Ready?</p>
       <h2 class="section-title">Your notes are waiting.</h2>
-      <p class="section-sub">No sign-up. No internet required. Everything lives right here in your browser.</p>
+      <p class="section-sub">The path to success is here.</p>
       <a href="note.html" class="btn-primary">Open Pen To Text →</a>
     </div>
   </section>
@@ -851,3 +974,5 @@
 
 </body>
 </html>
+
+

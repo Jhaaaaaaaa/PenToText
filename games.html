@@ -299,14 +299,157 @@ nav{position:sticky;top:0;z-index:90;display:flex;align-items:center;justify-con
 /* ============================================================
    RESPONSIVE
    ============================================================ */
+/* ===================== FEATURE PILLS ===================== */
+.feature-pill{
+  display:inline-flex;align-items:center;gap:6px;padding:7px 14px;
+  border-radius:var(--rf);border:1px solid var(--border2);background:var(--panel);
+  color:var(--ink2);font-size:12px;text-decoration:none;transition:all .2s;
+}
+.feature-pill:hover{background:var(--gold);color:#000;}
+
+/* ---- NAV mobile hamburger ---- */
+#gamesHamburger{
+  display:none;background:none;border:1px solid var(--border2);border-radius:8px;
+  width:38px;height:38px;cursor:pointer;flex-direction:column;align-items:center;
+  justify-content:center;gap:5px;padding:0;flex-shrink:0;
+}
+#gamesHamburger span{display:block;width:18px;height:2px;background:var(--ink);border-radius:2px;}
+#gamesMobileMenu{
+  display:none;position:fixed;inset:0;background:var(--bg2);z-index:200;
+  flex-direction:column;align-items:center;justify-content:center;gap:28px;
+}
+#gamesMobileMenu.open{display:flex;}
+#gamesMobileMenu a{
+  font-family:var(--font-d);font-size:26px;font-weight:700;color:var(--ink);
+  text-decoration:none;transition:color .2s;
+}
+#gamesMobileMenu a:hover{color:var(--gold);}
+#gamesMobileMenu .gmm-close{
+  position:absolute;top:18px;right:18px;background:none;border:none;
+  font-size:32px;cursor:pointer;color:var(--muted);line-height:1;
+}
+
+@media(max-width:900px){
+  #sudokuGrid{max-width:360px;}
+  .chain-score-row{gap:8px;}
+}
+
 @media(max-width:680px){
-  nav{padding:12px 16px;}
-  .nav-links{gap:6px;}
-  .nav-links a{padding:6px 10px;font-size:12px;}
-  .hero{padding:40px 16px 28px;}
-  .game-section{padding:20px 14px 40px;}
-  .tabs-wrap{padding:20px 14px 0;gap:6px;}
-  .tab-btn{padding:7px 14px;font-size:13px;}
+  /* Nav */
+  nav{padding:10px 14px;}
+  .nav-links{display:none;}
+  #gamesHamburger{display:flex;}
+
+  /* Hero */
+  .hero{padding:36px 16px 24px;}
+  .hero h1{font-size:clamp(34px,10vw,52px);}
+  .hero p{font-size:14px;}
+  #gamesQuote{font-size:12px;padding:7px 14px;border-radius:10px;}
+
+  /* Feature pills — smaller, scroll-friendly */
+  .feature-pills-wrap{padding:14px 16px;gap:7px;}
+  .feature-pills-wrap a{padding:6px 10px;font-size:11px;}
+
+  /* Tabs — horizontally scrollable row */
+  .tabs-wrap{
+    padding:14px 0 0;gap:0;
+    flex-wrap:nowrap;overflow-x:auto;
+    justify-content:flex-start;
+    scrollbar-width:none;
+    padding-left:14px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .tabs-wrap::-webkit-scrollbar{display:none;}
+  .tab-btn{padding:8px 14px;font-size:12.5px;white-space:nowrap;flex-shrink:0;border-radius:var(--rf);}
+
+  /* Game sections */
+  .game-section{padding:18px 14px 60px;}
+  .section-title{font-size:22px;}
+
+  /* TimeKeeper */
+  .clock-display{font-size:clamp(40px,12vw,72px);padding:20px 0;}
+  #liveClock{font-size:clamp(38px,11vw,68px);padding:20px 0;}
+  #liveDate{font-size:14px;}
+  .timer-inputs input{width:60px;height:44px;font-size:22px;}
+  .timer-sep{font-size:22px;}
+  .clock-controls{gap:8px;}
+  .clock-controls .btn{padding:9px 16px;font-size:13px;}
+
+  /* Sudoku — scale grid to fit screen */
+  #sudokuGrid{
+    max-width:min(320px, calc(100vw - 28px));
+    margin:0 auto 16px;
+    gap:1px;padding:2px;
+  }
+  .sudoku-cell{font-size:clamp(11px,3.5vw,16px);}
+  .sudoku-header{flex-direction:column;align-items:flex-start;gap:10px;}
+  .sudoku-timer{font-size:22px;padding:6px 14px;}
+  .sudoku-diff{flex-wrap:wrap;}
+  .sudoku-numpad{gap:6px;}
+  .num-btn{width:38px;height:38px;font-size:15px;}
+  .num-btn.erase{width:48px;}
+
+  /* Ink Flood — canvas scales via JS, just ensure container fits */
+  #floodCanvas{max-width:100%;height:auto;}
+  .flood-colors{gap:6px;}
+  .flood-color-btn{width:36px;height:36px;}
+
+  /* Word Weaver */
+  #wordGrid{max-width:min(280px,calc(100vw - 36px));gap:4px;}
+  .word-cell{font-size:clamp(16px,5vw,22px);}
+  .word-kb-row{gap:3px;}
+  .kb-key{min-width:28px;height:38px;font-size:12px;padding:0 3px;}
+  .kb-wide{min-width:42px;font-size:11px;}
+
+  /* Memory Matrix */
+  #memoryGrid{max-width:min(340px,calc(100vw - 28px));}
+  .mem-cell{font-size:20px;}
+  .memory-header{flex-direction:column;align-items:flex-start;}
+  .memory-stat{padding:8px 14px;}
+
+  /* Chain Reaction (2048) */
+  #chainGrid{
+    max-width:min(320px,calc(100vw - 28px));
+    gap:6px;padding:8px;
+  }
+  .chain-cell{font-size:clamp(13px,3.5vw,20px);}
+  .chain-score{padding:8px 14px;min-width:80px;}
+  .chain-score .val{font-size:20px;}
+
+  /* Trivia */
+  .trivia-card{padding:18px 14px;}
+  .trivia-q{font-size:16px;}
+  .trivia-opt{padding:10px 12px;font-size:13px;}
+  .trivia-subjects{gap:6px;}
+  .subject-btn{padding:6px 12px;font-size:12px;}
+
+  /* Mind Bender */
+  .puzzle-tabs{gap:6px;}
+  .puzzle-tab{padding:6px 12px;font-size:12px;}
+  #lightsGrid{max-width:min(260px,calc(100vw - 36px));gap:5px;}
+  .math-q{font-size:clamp(28px,8vw,48px);padding:20px;}
+  .math-input{font-size:20px;height:46px;}
+  .pattern-seq{gap:6px;}
+  .pattern-num{width:40px;height:40px;font-size:16px;}
+  .pattern-opts{gap:6px;}
+  .pattern-opt{width:50px;height:50px;font-size:15px;}
+
+  /* Buttons */
+  .btn{padding:9px 16px;font-size:13px;}
+  .btn-sm{padding:6px 12px;font-size:12px;}
+
+  /* Card padding */
+  .card{padding:16px;}
+
+  /* Toast above mobile nav thumb zone */
+  #toast{bottom:80px;}
+}
+
+@media(max-width:400px){
+  .tab-btn{padding:7px 11px;font-size:12px;}
+  #sudokuGrid{max-width:calc(100vw - 20px);}
+  #chainGrid{max-width:calc(100vw - 20px);}
+  .kb-key{min-width:24px;height:36px;font-size:11px;}
 }
 </style>
 </head>
@@ -315,14 +458,32 @@ nav{position:sticky;top:0;z-index:90;display:flex;align-items:center;justify-con
 <!-- NAV -->
 <nav>
   <a href="index.html" class="nav-brand">Pen <span>&</span> Text</a>
-  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+  <div style="display:flex;gap:10px;align-items:center;">
     <div class="nav-links">
       <a href="#" class="active" id="navPlay">Play Zone</a>
       <a href="note.html">My Notes</a>
     </div>
     <a href="index.html" class="nav-back">← Home</a>
+    <button id="gamesHamburger" aria-label="Open menu"><span></span><span></span><span></span></button>
   </div>
 </nav>
+
+<!-- Mobile fullscreen nav menu -->
+<div id="gamesMobileMenu">
+  <button class="gmm-close" id="gmmClose" aria-label="Close">×</button>
+  <a href="note.html">My Notes</a>
+  <a href="index.html">← Home</a>
+</div>
+<script>
+  document.getElementById('gamesHamburger').addEventListener('click',()=>{
+    document.getElementById('gamesMobileMenu').classList.add('open');
+    document.body.style.overflow='hidden';
+  });
+  document.getElementById('gmmClose').addEventListener('click',()=>{
+    document.getElementById('gamesMobileMenu').classList.remove('open');
+    document.body.style.overflow='';
+  });
+</script>
 
 <!-- HERO -->
 <div class="hero">
@@ -345,7 +506,19 @@ nav{position:sticky;top:0;z-index:90;display:flex;align-items:center;justify-con
   ">✨ The more you write, the clearer your thinking becomes.</p>
 </div>
 
-
+<!-- Notes app feature pills -->
+<div class="feature-pills-wrap" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:20px 28px;border-bottom:1px solid var(--border);">
+  <a href="note.html" class="feature-pill">🗂️ Color Categories</a>
+  <a href="note.html" class="feature-pill">🎤 Voice to Text</a>
+  <a href="note.html" class="feature-pill">📌 Pin Notes</a>
+  <a href="note.html" class="feature-pill">🗄️ Archive & Trash</a>
+  <a href="note.html" class="feature-pill">↩️ Instant Undo</a>
+  <a href="note.html" class="feature-pill">🖼️ Image Attachments</a>
+  <a href="note.html" class="feature-pill">🔀 Flexible Sorting</a>
+  <a href="note.html" class="feature-pill">💾 Export & Import</a>
+  <a href="note.html" class="feature-pill">🌙 Dark Mode</a>
+  <a href="note.html" class="feature-pill">🃏 Flashcards</a>
+</div>
 
 <!-- TABS -->
 <div class="tabs-wrap">
