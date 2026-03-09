@@ -464,9 +464,10 @@ function createCard(note, context) {
 
   if (context === "notes") {
     controls.append(
-      makeBtn("Edit",    "edit-btn",    () => openEditModal(note.id)),
-      makeBtn("Archive", "archive-btn", () => archiveNote(note.id)),
-      makeBtn("Delete",  "delete-btn",  () => softDelete(note.id))
+      makeBtn("Edit",       "edit-btn",       () => openEditModal(note.id)),
+      makeBtn("🃏 Cards",   "flash-btn",      () => openFlashcardManager(note.id)),
+      makeBtn("Archive",    "archive-btn",    () => archiveNote(note.id)),
+      makeBtn("Delete",     "delete-btn",     () => softDelete(note.id))
     );
   } else if (context === "archived") {
     controls.append(
@@ -947,6 +948,8 @@ function wireEvents() {
     if (e.key === "Escape") {
       if (noteModal.style.display      === "flex") closeNoteModal();
       if (customizeModal.style.display === "flex") closeCustomizeModal();
+      const fcModal = document.getElementById("flashcardModal");
+      if (fcModal && fcModal.style.display === "flex") closeFlashcardManager();
     }
     // Ctrl/Cmd + B — new note
     if (mod && e.key.toLowerCase() === "b") { e.preventDefault(); openNewNoteModal(); }
@@ -996,7 +999,199 @@ function init() {
 
 init();
 
-/* Expose a debug helper for the browser console */
+/* =============================================================
+   FLASHCARD SYSTEM — Manual, per-note
+   ============================================================= */
+
+/* --- Storage helpers --- */
+function getFlashcards(noteId) {
+  try {
+    return JSON.parse(localStorage.getItem("fc_" + noteId) || "[]");
+  } catch { return []; }
+}
+
+function saveFlashcards(noteId, cards) {
+  localStorage.setItem("fc_" + noteId, JSON.stringify(cards));
+}
+
+/* --- State --- */
+let fcNoteId       = null;   // which note we're managing
+let fcStudyCards   = [];     // shuffled deck for study mode
+let fcStudyIndex   = 0;      // current card index
+let fcStudyFlipped = false;  // is card flipped?
+
+/* --- Open manager --- */
+function openFlashcardManager(noteId) {
+  fcNoteId = noteId;
+  const note = notes.find(n => n.id === noteId);
+  const modal = document.getElementById("flashcardModal");
+  document.getElementById("fcNoteTitle").textContent =
+    note?.title ? `Flashcards — ${note.title}` : "Flashcards";
+
+  renderFlashcardList();
+  modal.style.display = "flex";
+  modal.setAttribute("aria-hidden", "false");
+}
+
+function closeFlashcardManager() {
+  document.getElementById("flashcardModal").style.display = "none";
+  fcNoteId = null;
+}
+
+/* --- Render card list --- */
+function renderFlashcardList() {
+  const cards   = getFlashcards(fcNoteId);
+  const listEl  = document.getElementById("fcCardList");
+  const emptyEl = document.getElementById("fcEmpty");
+  const studyBtn = document.getElementById("fcStudyBtn");
+
+  listEl.innerHTML = "";
+  emptyEl.style.display = cards.length ? "none" : "block";
+  studyBtn.disabled = cards.length === 0;
+
+  cards.forEach((card, i) => {
+    const item = document.createElement("div");
+    item.className = "fc-list-item";
+
+    const front = document.createElement("div");
+    front.className = "fc-list-front";
+    front.textContent = card.front || "(no front)";
+
+    const back = document.createElement("div");
+    back.className = "fc-list-back";
+    back.textContent = card.back || "(no back)";
+
+    const actions = document.createElement("div");
+    actions.className = "fc-list-actions";
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "fc-edit-btn";
+    editBtn.textContent = "✏️";
+    editBtn.title = "Edit card";
+    editBtn.addEventListener("click", () => openCardEditor(i));
+
+    const delBtn = document.createElement("button");
+    delBtn.className = "fc-del-btn";
+    delBtn.textContent = "×";
+    delBtn.title = "Delete card";
+    delBtn.addEventListener("click", () => {
+      if (!confirm("Delete this flashcard?")) return;
+      const arr = getFlashcards(fcNoteId);
+      arr.splice(i, 1);
+      saveFlashcards(fcNoteId, arr);
+      renderFlashcardList();
+    });
+
+    actions.append(editBtn, delBtn);
+    item.append(front, back, actions);
+    listEl.appendChild(item);
+  });
+}
+
+/* --- Card editor (inline within manager) --- */
+function openCardEditor(index) {
+  const cards = getFlashcards(fcNoteId);
+  const card  = index === -1 ? { front: "", back: "" } : cards[index];
+
+  document.getElementById("fcEditorTitle").textContent =
+    index === -1 ? "Add Flashcard" : "Edit Flashcard";
+  document.getElementById("fcFrontInput").value = card.front || "";
+  document.getElementById("fcBackInput").value  = card.back  || "";
+  document.getElementById("fcEditorIndex").value = index;
+
+  document.getElementById("fcManagerView").style.display = "none";
+  document.getElementById("fcEditorView").style.display  = "flex";
+  document.getElementById("fcFrontInput").focus();
+}
+
+function saveCardEdit() {
+  const front = document.getElementById("fcFrontInput").value.trim();
+  const back  = document.getElementById("fcBackInput").value.trim();
+  if (!front && !back) { alert("Please enter a front or back for the card."); return; }
+
+  const index = parseInt(document.getElementById("fcEditorIndex").value);
+  const cards = getFlashcards(fcNoteId);
+
+  if (index === -1) {
+    cards.push({ front, back });
+  } else {
+    cards[index] = { front, back };
+  }
+  saveFlashcards(fcNoteId, cards);
+
+  document.getElementById("fcManagerView").style.display = "flex";
+  document.getElementById("fcEditorView").style.display  = "none";
+  renderFlashcardList();
+}
+
+function cancelCardEdit() {
+  document.getElementById("fcManagerView").style.display = "flex";
+  document.getElementById("fcEditorView").style.display  = "none";
+}
+
+/* --- Study mode --- */
+function openStudyMode() {
+  const cards = getFlashcards(fcNoteId);
+  if (!cards.length) return;
+
+  // Shuffle
+  fcStudyCards = [...cards].sort(() => Math.random() - 0.5);
+  fcStudyIndex  = 0;
+  fcStudyFlipped = false;
+
+  document.getElementById("fcManagerView").style.display = "none";
+  document.getElementById("fcEditorView").style.display  = "none";
+  document.getElementById("fcStudyView").style.display   = "flex";
+
+  renderStudyCard();
+}
+
+function renderStudyCard() {
+  const card    = fcStudyCards[fcStudyIndex];
+  const cardEl  = document.getElementById("fcStudyCard");
+  const frontEl = document.getElementById("fcStudyFront");
+  const backEl  = document.getElementById("fcStudyBack");
+  const counter = document.getElementById("fcStudyCounter");
+  const flipBtn = document.getElementById("fcFlipBtn");
+  const nextBtn = document.getElementById("fcNextBtn");
+  const prevBtn = document.getElementById("fcPrevBtn");
+
+  fcStudyFlipped = false;
+  cardEl.classList.remove("flipped");
+  frontEl.textContent = card.front || "(no front)";
+  backEl.textContent  = card.back  || "(no back)";
+  counter.textContent = `${fcStudyIndex + 1} / ${fcStudyCards.length}`;
+  flipBtn.textContent = "Flip Card";
+  prevBtn.disabled = fcStudyIndex === 0;
+  nextBtn.textContent = fcStudyIndex === fcStudyCards.length - 1 ? "Finish" : "Next →";
+}
+
+function flipStudyCard() {
+  fcStudyFlipped = !fcStudyFlipped;
+  document.getElementById("fcStudyCard").classList.toggle("flipped", fcStudyFlipped);
+  document.getElementById("fcFlipBtn").textContent = fcStudyFlipped ? "Show Front" : "Flip Card";
+}
+
+function nextStudyCard() {
+  if (fcStudyIndex === fcStudyCards.length - 1) {
+    closeStudyMode();
+  } else {
+    fcStudyIndex++;
+    renderStudyCard();
+  }
+}
+
+function prevStudyCard() {
+  if (fcStudyIndex > 0) { fcStudyIndex--; renderStudyCard(); }
+}
+
+function closeStudyMode() {
+  document.getElementById("fcStudyView").style.display   = "none";
+  document.getElementById("fcManagerView").style.display = "flex";
+  renderFlashcardList();
+}
+
+/* Expose debug helper */
 window._app = {
   get state() { return { notes, archivedNotes, recentlyDeleted, categories, currentCategory, currentSort }; },
   exportData,

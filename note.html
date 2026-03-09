@@ -174,6 +174,86 @@
 </div>
 
 <script src="script.js"></script>
+
+<!-- ============================================================
+     MODAL — Flashcard Manager
+     ============================================================ -->
+<div id="flashcardModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" style="display:none;">
+  <div class="modal-content fc-modal-content">
+
+    <!-- MANAGER VIEW -->
+    <div id="fcManagerView" style="display:flex;flex-direction:column;gap:16px;width:100%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+        <h2 id="fcNoteTitle" style="font-family:var(--font-display);font-size:20px;">Flashcards</h2>
+        <button class="close" id="fcClose" aria-label="Close">×</button>
+      </div>
+
+      <div id="fcEmpty" style="display:none;text-align:center;padding:32px 0;color:var(--muted);font-size:14px;">
+        No flashcards yet.<br>
+        <span style="font-size:12px;">Click <strong>+ Add Card</strong> to create your first one.</span>
+      </div>
+
+      <div id="fcCardList" class="fc-card-list"></div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;padding-top:4px;">
+        <button id="fcAddBtn" class="btn-primary" style="font-size:13px;padding:9px 18px;">+ Add Card</button>
+        <button id="fcStudyBtn" class="btn-ghost" style="font-size:13px;padding:9px 18px;" disabled>▶ Study</button>
+      </div>
+    </div>
+
+    <!-- CARD EDITOR VIEW -->
+    <div id="fcEditorView" style="display:none;flex-direction:column;gap:14px;width:100%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2 id="fcEditorTitle" style="font-family:var(--font-display);font-size:20px;">Add Flashcard</h2>
+        <button class="close" id="fcEditorCancel" aria-label="Back">×</button>
+      </div>
+      <input type="hidden" id="fcEditorIndex" value="-1" />
+
+      <label style="font-size:13px;font-weight:500;color:var(--ink2);">Front <span style="color:var(--muted);font-weight:300;">(question / term)</span></label>
+      <textarea id="fcFrontInput" class="fc-textarea" placeholder="e.g. What is photosynthesis?" rows="3"></textarea>
+
+      <label style="font-size:13px;font-weight:500;color:var(--ink2);">Back <span style="color:var(--muted);font-weight:300;">(answer / definition)</span></label>
+      <textarea id="fcBackInput" class="fc-textarea" placeholder="e.g. The process by which plants convert sunlight into energy." rows="4"></textarea>
+
+      <div class="modal-actions">
+        <button id="fcSaveCardBtn" class="btn-primary">Save Card</button>
+        <button id="fcCancelEditBtn" class="btn-ghost">Cancel</button>
+      </div>
+    </div>
+
+    <!-- STUDY VIEW -->
+    <div id="fcStudyView" style="display:none;flex-direction:column;align-items:center;gap:20px;width:100%;">
+      <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+        <h2 style="font-family:var(--font-display);font-size:20px;">Study Mode</h2>
+        <button class="close" id="fcStudyClose" aria-label="Exit study">×</button>
+      </div>
+
+      <span id="fcStudyCounter" style="font-size:13px;color:var(--muted);">1 / 1</span>
+
+      <div id="fcStudyCard" class="fc-study-card" onclick="flipStudyCard()">
+        <div class="fc-study-inner">
+          <div class="fc-study-face fc-study-front">
+            <span class="fc-face-label">Front</span>
+            <p id="fcStudyFront"></p>
+          </div>
+          <div class="fc-study-face fc-study-back">
+            <span class="fc-face-label">Back</span>
+            <p id="fcStudyBack"></p>
+          </div>
+        </div>
+      </div>
+
+      <p style="font-size:12px;color:var(--muted);">Click the card to flip it</p>
+
+      <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+        <button id="fcPrevBtn" class="btn-ghost" style="font-size:13px;padding:9px 18px;">← Prev</button>
+        <button id="fcFlipBtn" class="btn-primary" style="font-size:13px;padding:9px 22px;">Flip Card</button>
+        <button id="fcNextBtn" class="btn-primary" style="font-size:13px;padding:9px 18px;">Next →</button>
+      </div>
+    </div>
+
+  </div>
+</div>
 <script>
   /* ============================================================
      Mobile UI wiring — sidebar toggle & mobile drawer
@@ -296,6 +376,23 @@
   // Also update on any category click
   document.getElementById('categoryList').addEventListener('click', () => setTimeout(updateViewBar, 80));
   document.getElementById('searchBar').addEventListener('input', () => setTimeout(updateViewBar, 280));
+
+  /* ============================================================
+     Flashcard modal button wiring
+     ============================================================ */
+  document.getElementById('fcClose').addEventListener('click', closeFlashcardManager);
+  document.getElementById('flashcardModal').addEventListener('click', e => {
+    if (e.target === document.getElementById('flashcardModal')) closeFlashcardManager();
+  });
+  document.getElementById('fcAddBtn').addEventListener('click', () => openCardEditor(-1));
+  document.getElementById('fcStudyBtn').addEventListener('click', openStudyMode);
+  document.getElementById('fcSaveCardBtn').addEventListener('click', saveCardEdit);
+  document.getElementById('fcCancelEditBtn').addEventListener('click', cancelCardEdit);
+  document.getElementById('fcEditorCancel').addEventListener('click', cancelCardEdit);
+  document.getElementById('fcStudyClose').addEventListener('click', closeStudyMode);
+  document.getElementById('fcFlipBtn').addEventListener('click', flipStudyCard);
+  document.getElementById('fcNextBtn').addEventListener('click', nextStudyCard);
+  document.getElementById('fcPrevBtn').addEventListener('click', prevStudyCard);
 
   /* ============================================================
      Rotating inspirational quotes
